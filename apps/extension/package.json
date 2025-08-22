@@ -1,8 +1,7 @@
 {
-  "name": "@chatrat/extension",
-  "displayName": "Repository Context Capture for AgentDB",
-  "description": "Captures repository files and stores them in AgentDB for MCP server integration",
-  "version": "0.1.0",
+  "name": "chatrat",
+  "displayName": "Chatrat: expose code in real time via MCP",
+  "description": "Indexes repository files and stores them in AgentDB for MCP server integration",
   "engines": {
     "vscode": "^1.74.0"
   },
@@ -10,34 +9,41 @@
     "Other"
   ],
   "activationEvents": [
-    "onStartupFinished"
+    "onStartupFinished",
+    "onUri"
   ],
+  "publisher": "ServietteLLC",
+  "version": "0.0.1",
   "main": "./out/extension.js",
   "contributes": {
+    "uriHandler": {
+      "scheme": "vscode",
+      "authority": "ServietteLLC.chatrat"
+    },
     "configuration": {
-      "title": "Repository Context Capture",
+      "title": "Chatrat: Repository Context Capture",
       "properties": {
-        "repoContextCapture.agentDbToken": {
+        "chatrat.agentDbToken": {
           "type": "string",
           "default": "",
           "description": "AgentDB UUID token for database access"
         },
-        "repoContextCapture.agentDbApiKey": {
+        "chatrat.agentDbApiKey": {
           "type": "string",
           "default": "",
           "description": "AgentDB API key for authentication"
         },
-        "repoContextCapture.databaseName": {
+        "chatrat.databaseName": {
           "type": "string",
           "default": "repository-context",
           "description": "Database name to store repository data"
         },
-        "repoContextCapture.templateName": {
+        "chatrat.templateName": {
           "type": "string",
           "default": "repo-context-template",
           "description": "Template name to use when creating the per-user database."
         },
-        "repoContextCapture.excludePatterns": {
+        "chatrat.excludePatterns": {
           "type": "array",
           "default": [
             "**/node_modules/**",
@@ -51,53 +57,65 @@
           ],
           "description": "File patterns to exclude from capture"
         },
-        "repoContextCapture.maxFileSize": {
+        "chatrat.maxFileSize": {
           "type": "number",
           "default": 1048576,
           "description": "Maximum file size in bytes (default: 1MB)"
         },
-        "repoContextCapture.autoCapture": {
+        "chatrat.autoCapture": {
           "type": "boolean",
           "default": false,
           "description": "Automatically capture and send data when opening a repository"
+        },
+        "chatrat.serverBaseUrl": {
+          "type": "string",
+          "default": "http://localhost:3000",
+          "description": "Base URL of the authentication and proxy server"
         }
       }
     },
     "commands": [
       {
-        "command": "repoContextCapture.captureAndSend",
-        "title": "Capture Repository and Send to AgentDB"
+        "command": "chatrat.captureAndSend",
+        "title": "Chatrat: Index Repository"
       },
       {
-        "command": "repoContextCapture.queryRepository",
-        "title": "Query Repository Context from AgentDB"
+        "command": "chatrat.listStoredRepositories",
+        "title": "Chatrat: List Indexed Repositories"
       },
       {
-        "command": "repoContextCapture.listStoredRepositories",
-        "title": "List Stored Repositories in AgentDB"
+        "command": "chatrat.clearDatabase",
+        "title": "Chatrat: Delete All Data"
       },
       {
-        "command": "repoContextCapture.clearDatabase",
-        "title": "Clear Repository Database in AgentDB"
+        "command": "chatrat.getMcpUrl",
+        "title": "Chatrat: Get MCP URL"
       },
       {
-        "command": "repoContextCapture.getMcpUrl",
-        "title": "Get MCP URL for Current User"
+        "command": "chatrat.authenticate",
+        "title": "Chatrat: Authenticate with GitHub"
+      },
+      {
+        "command": "chatrat.logout",
+        "title": "Chatrat: Logout from GitHub"
       }
     ]
   },
   "scripts": {
-    "vscode:prepublish": "npm run build",
-    "build": "tsc -p ./",
-    "watch": "tsc -watch -p ./"
+    "vscode:prepublish": "npm run esbuild-base -- --minify",
+    "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node",
+    "build": "npm run esbuild-base -- --sourcemap",
+    "watch": "npm run esbuild-base -- --sourcemap --watch"
   },
   "devDependencies": {
-    "@types/vscode": "^1.74.0",
     "@types/node": "16.x",
+    "@types/vscode": "^1.74.0",
+    "esbuild": "^0.25.9",
     "typescript": "^4.9.4"
   },
   "dependencies": {
     "@agentdb/sdk": "^1.1.8",
+    "axios": "^1.7.9",
     "ignore": "^5.2.4"
   }
 }

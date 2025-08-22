@@ -1,0 +1,324 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Privacy Policy - Chatrat" description="Privacy policy for Chatrat VSCode extension">
+	<!-- Navigation -->
+	<nav class="nav">
+		<div class="container">
+			<div class="nav-content">
+				<div class="nav-brand">
+					<a href="/"><h2>Chatrat</h2></a>
+				</div>
+				<div class="nav-links">
+					<a href="/">Home</a>
+					<a href="/#features">Features</a>
+					<a href="/#how-it-works">How it Works</a>
+					<a href="/terms">Terms</a>
+				</div>
+			</div>
+		</div>
+	</nav>
+
+	<!-- Privacy Policy Content -->
+	<main class="legal-page">
+		<div class="container">
+			<div class="legal-content">
+				<h1>Privacy Policy</h1>
+				<p class="last-updated">Last updated: December 2024</p>
+
+				<section>
+					<h2>1. Information We Collect</h2>
+					<p>Chatrat is designed with privacy as a core principle. We collect minimal information necessary to provide our service:</p>
+					<ul>
+						<li><strong>Local Code Analysis:</strong> The extension analyzes your codebase locally on your machine to create an index</li>
+						<li><strong>Usage Analytics:</strong> Basic, anonymized usage statistics to improve the extension (optional and can be disabled)</li>
+						<li><strong>Error Reports:</strong> Crash reports and error logs to help us fix bugs (no code content included)</li>
+					</ul>
+				</section>
+
+				<section>
+					<h2>2. How We Use Your Information</h2>
+					<p>Your code and project information is processed entirely on your local machine:</p>
+					<ul>
+						<li>Code indexing happens locally within VSCode</li>
+						<li>File content is shared only through the MCP protocol when you explicitly reference files</li>
+						<li>No code is uploaded to our servers or third-party services</li>
+						<li>Analytics data is used solely to improve the extension's performance and features</li>
+					</ul>
+				</section>
+
+				<section>
+					<h2>3. Data Storage and Security</h2>
+					<ul>
+						<li><strong>Local Storage:</strong> All code indexes and metadata are stored locally on your machine</li>
+						<li><strong>No Cloud Storage:</strong> We do not store your code or project data on any remote servers</li>
+						<li><strong>Secure Communication:</strong> MCP protocol communications are handled securely within your local environment</li>
+						<li><strong>Data Encryption:</strong> Local data is encrypted using industry-standard methods</li>
+					</ul>
+				</section>
+
+				<section>
+					<h2>4. Third-Party Services</h2>
+					<p>Chatrat may interact with:</p>
+					<ul>
+						<li><strong>VSCode Marketplace:</strong> For extension updates and installation</li>
+						<li><strong>LLM Providers:</strong> When you choose to connect the MCP server to AI services (data sharing controlled by you)</li>
+						<li><strong>Analytics Services:</strong> For anonymized usage statistics (can be opted out)</li>
+					</ul>
+				</section>
+
+				<section>
+					<h2>5. Your Rights and Controls</h2>
+					<p>You have full control over your data:</p>
+					<ul>
+						<li>Disable analytics collection in extension settings</li>
+						<li>Delete local indexes at any time</li>
+						<li>Control which files are indexed through .gitignore-style configuration</li>
+						<li>Disconnect from MCP server at any time</li>
+					</ul>
+				</section>
+
+				<section>
+					<h2>6. Data Retention</h2>
+					<ul>
+						<li>Local indexes are retained until you uninstall the extension or manually delete them</li>
+						<li>Analytics data is retained for 12 months maximum</li>
+						<li>Error logs are retained for 6 months for debugging purposes</li>
+					</ul>
+				</section>
+
+				<section>
+					<h2>7. Children's Privacy</h2>
+					<p>Our service is not directed to children under 13. We do not knowingly collect personal information from children under 13.</p>
+				</section>
+
+				<section>
+					<h2>8. Changes to This Policy</h2>
+					<p>We may update this privacy policy from time to time. We will notify users of any material changes through the extension or our website.</p>
+				</section>
+
+				<section>
+					<h2>9. Contact Us</h2>
+					<p>If you have any questions about this privacy policy, please contact us at:</p>
+					<ul>
+						<li>Email: privacy@repo-mcp.com</li>
+						<li>GitHub: <a href="https://github.com/your-username/repo-mcp">github.com/your-username/repo-mcp</a></li>
+					</ul>
+				</section>
+			</div>
+		</div>
+	</main>
+
+	<!-- Footer -->
+	<footer class="footer">
+		<div class="container">
+			<div class="footer-content">
+				<div class="footer-brand">
+					<h3>Chatrat</h3>
+					<p>Smart codebase context for LLM conversations</p>
+				</div>
+				<div class="footer-links">
+					<div class="footer-section">
+						<h4>Product</h4>
+						<a href="/#features">Features</a>
+						<a href="/#how-it-works">How it Works</a>
+						<a href="https://github.com/your-username/repo-mcp">GitHub</a>
+					</div>
+					<div class="footer-section">
+						<h4>Legal</h4>
+						<a href="/privacy">Privacy Policy</a>
+						<a href="/terms">Terms of Service</a>
+					</div>
+				</div>
+			</div>
+			<div class="footer-bottom">
+				<p>&copy; 2024 Chatrat. All rights reserved.</p>
+			</div>
+		</div>
+	</footer>
+</Layout>
+
+<style>
+	/* Navigation */
+	.nav {
+		background: var(--color-white);
+		border-bottom: 1px solid var(--color-gray-200);
+		position: sticky;
+		top: 0;
+		z-index: 50;
+	}
+
+	.nav-content {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 1rem 0;
+	}
+
+	.nav-brand a {
+		text-decoration: none;
+	}
+
+	.nav-brand h2 {
+		color: var(--color-primary);
+		font-size: 1.5rem;
+		font-weight: 700;
+	}
+
+	.nav-links {
+		display: flex;
+		gap: 2rem;
+		align-items: center;
+	}
+
+	.nav-links a {
+		font-weight: 500;
+		color: var(--color-text);
+		transition: color 0.2s ease;
+	}
+
+	.nav-links a:hover {
+		color: var(--color-primary);
+	}
+
+	/* Legal Page */
+	.legal-page {
+		padding: 4rem 0;
+		background: var(--color-background);
+		min-height: 70vh;
+	}
+
+	.legal-content {
+		max-width: 800px;
+		margin: 0 auto;
+		background: var(--color-white);
+		padding: 3rem;
+		border-radius: var(--border-radius-lg);
+		box-shadow: var(--shadow-md);
+	}
+
+	.legal-content h1 {
+		font-size: 2.5rem;
+		color: var(--color-text);
+		margin-bottom: 0.5rem;
+	}
+
+	.last-updated {
+		color: var(--color-text-light);
+		margin-bottom: 2rem;
+		font-style: italic;
+	}
+
+	.legal-content section {
+		margin-bottom: 2rem;
+	}
+
+	.legal-content h2 {
+		font-size: 1.5rem;
+		color: var(--color-text);
+		margin-bottom: 1rem;
+		border-bottom: 2px solid var(--color-primary);
+		padding-bottom: 0.5rem;
+	}
+
+	.legal-content p {
+		margin-bottom: 1rem;
+		line-height: 1.6;
+		color: var(--color-text);
+	}
+
+	.legal-content ul {
+		margin-bottom: 1rem;
+		padding-left: 1.5rem;
+	}
+
+	.legal-content li {
+		margin-bottom: 0.5rem;
+		line-height: 1.6;
+		color: var(--color-text);
+	}
+
+	.legal-content a {
+		color: var(--color-primary);
+		text-decoration: underline;
+	}
+
+	.legal-content a:hover {
+		color: var(--color-primary-dark);
+	}
+
+	/* Footer */
+	.footer {
+		background: var(--color-gray-900);
+		color: var(--color-white);
+		padding: 3rem 0 1rem;
+	}
+
+	.footer-content {
+		display: grid;
+		grid-template-columns: 1fr 2fr;
+		gap: 3rem;
+		margin-bottom: 2rem;
+	}
+
+	.footer-brand h3 {
+		color: var(--color-primary);
+		margin-bottom: 0.5rem;
+	}
+
+	.footer-brand p {
+		color: var(--color-gray-200);
+	}
+
+	.footer-links {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+		gap: 2rem;
+	}
+
+	.footer-section h4 {
+		margin-bottom: 1rem;
+		color: var(--color-white);
+	}
+
+	.footer-section a {
+		display: block;
+		color: var(--color-gray-200);
+		margin-bottom: 0.5rem;
+		transition: color 0.2s ease;
+		text-decoration: none;
+	}
+
+	.footer-section a:hover {
+		color: var(--color-primary);
+	}
+
+	.footer-bottom {
+		border-top: 1px solid var(--color-gray-800);
+		padding-top: 1rem;
+		text-align: center;
+		color: var(--color-gray-200);
+	}
+
+	/* Responsive Design */
+	@media (max-width: 768px) {
+		.nav-links {
+			display: none;
+		}
+
+		.legal-content {
+			padding: 2rem 1rem;
+			margin: 0 1rem;
+		}
+
+		.legal-content h1 {
+			font-size: 2rem;
+		}
+
+		.footer-content {
+			grid-template-columns: 1fr;
+			text-align: center;
+		}
+	}
+</style>
