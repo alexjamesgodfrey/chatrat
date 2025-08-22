@@ -35,8 +35,8 @@ export class AuthService {
   }
 
   private getServerBaseUrl(): string {
-    const config = vscode.workspace.getConfiguration("repoContextCapture");
-    return config.get<string>("serverBaseUrl") || "http://localhost:3000";
+    const config = vscode.workspace.getConfiguration("chatrat");
+    return config.get<string>("serverBaseUrl") || "https://api.chatrat.cat";
   }
 
   public async initialize(): Promise<void> {

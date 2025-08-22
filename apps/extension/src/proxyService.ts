@@ -78,8 +78,8 @@ export class ProxyService {
   }
 
   private getServerBaseUrl(): string {
-    const config = vscode.workspace.getConfiguration("repoContextCapture");
-    return config.get<string>("serverBaseUrl") || "http://localhost:3000";
+    const config = vscode.workspace.getConfiguration("chatrat");
+    return config.get<string>("serverBaseUrl") || "https://api.chatrat.cat";
   }
 
   public async listDatabases(): Promise<DatabaseInfo[]> {

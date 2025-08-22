@@ -2,6 +2,7 @@
   "name": "chatrat",
   "displayName": "Chatrat: expose code in real time via MCP",
   "description": "Indexes repository files and stores them in AgentDB for MCP server integration",
+  "repository": "https://github.com/alexjamesgodfrey/chatrat",
   "engines": {
     "vscode": "^1.74.0"
   },
@@ -69,7 +70,7 @@
         },
         "chatrat.serverBaseUrl": {
           "type": "string",
-          "default": "http://localhost:3000",
+          "default": "https://api.chatrat.cat",
           "description": "Base URL of the authentication and proxy server"
         }
       }

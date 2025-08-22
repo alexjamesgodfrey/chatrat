@@ -146,6 +146,8 @@ app.get("/auth/github", (req: AuthenticatedRequest, res) => {
     redirectUri
   )}&scope=${scope}&state=${state}`;
 
+  console.log("redirecting to", redirectUri);
+
   res.redirect(githubAuthUrl);
   return;
 });
@@ -220,7 +222,7 @@ app.get("/auth/github/callback", async (req: AuthenticatedRequest, res) => {
         <body>
           <h1 class="success">✅ Authentication Successful!</h1>
           <p>Welcome, ${githubUser.name || githubUser.login}!</p>
-          <p class="info">You can now close this window and return to VSCode.</p>
+          <p class="info">Please wait for the "open in vscode" button to appear and do so.</p>
           <script>
             // Try to redirect to VSCode extension
             setTimeout(() => {
