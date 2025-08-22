@@ -1,0 +1,103 @@
+{
+  "name": "@chatrat/extension",
+  "displayName": "Repository Context Capture for AgentDB",
+  "description": "Captures repository files and stores them in AgentDB for MCP server integration",
+  "version": "0.1.0",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "Repository Context Capture",
+      "properties": {
+        "repoContextCapture.agentDbToken": {
+          "type": "string",
+          "default": "",
+          "description": "AgentDB UUID token for database access"
+        },
+        "repoContextCapture.agentDbApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "AgentDB API key for authentication"
+        },
+        "repoContextCapture.databaseName": {
+          "type": "string",
+          "default": "repository-context",
+          "description": "Database name to store repository data"
+        },
+        "repoContextCapture.templateName": {
+          "type": "string",
+          "default": "repo-context-template",
+          "description": "Template name to use when creating the per-user database."
+        },
+        "repoContextCapture.excludePatterns": {
+          "type": "array",
+          "default": [
+            "**/node_modules/**",
+            "**/.git/**",
+            "**/dist/**",
+            "**/build/**",
+            "**/*.log",
+            "**/.env*",
+            "**/.vscode/**",
+            "**/out/**"
+          ],
+          "description": "File patterns to exclude from capture"
+        },
+        "repoContextCapture.maxFileSize": {
+          "type": "number",
+          "default": 1048576,
+          "description": "Maximum file size in bytes (default: 1MB)"
+        },
+        "repoContextCapture.autoCapture": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically capture and send data when opening a repository"
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "repoContextCapture.captureAndSend",
+        "title": "Capture Repository and Send to AgentDB"
+      },
+      {
+        "command": "repoContextCapture.queryRepository",
+        "title": "Query Repository Context from AgentDB"
+      },
+      {
+        "command": "repoContextCapture.listStoredRepositories",
+        "title": "List Stored Repositories in AgentDB"
+      },
+      {
+        "command": "repoContextCapture.clearDatabase",
+        "title": "Clear Repository Database in AgentDB"
+      },
+      {
+        "command": "repoContextCapture.getMcpUrl",
+        "title": "Get MCP URL for Current User"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.74.0",
+    "@types/node": "16.x",
+    "typescript": "^4.9.4"
+  },
+  "dependencies": {
+    "@agentdb/sdk": "^1.1.8",
+    "ignore": "^5.2.4"
+  }
+}
