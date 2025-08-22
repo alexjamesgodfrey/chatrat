@@ -1,4 +1,5 @@
 import { DatabaseService } from "@agentdb/sdk";
+import { Redis } from "@upstash/redis";
 import axios from "axios";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -26,20 +27,83 @@ app.use(
   })
 );
 
-// Session configuration
-app.use(
-  session({
-    secret:
-      process.env.SESSION_SECRET || "fallback-secret-change-in-production",
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: process.env.NODE_ENV === "production",
-      httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    },
-  })
-);
+// Custom Upstash Redis Session Store
+class UpstashRedisStore extends (session.Store as any) {
+  private client: Redis;
+  private prefix: string;
+  private ttl: number;
+
+  constructor(options: { client: Redis; prefix?: string; ttl?: number }) {
+    super();
+    this.client = options.client;
+    this.prefix = options.prefix || "sess:";
+    this.ttl = options.ttl || 86400; // 24 hours default
+  }
+
+  async get(sid: string, callback: (err: any, session?: any) => void) {
+    try {
+      const key = this.prefix + sid;
+      const data = await this.client.get(key);
+
+      if (!data) {
+        return callback(null, null);
+      }
+
+      const session = typeof data === "string" ? JSON.parse(data) : data;
+      callback(null, session);
+    } catch (err) {
+      console.error("Session get error:", err);
+      callback(err);
+    }
+  }
+
+  async set(sid: string, session: any, callback: (err?: any) => void) {
+    try {
+      const key = this.prefix + sid;
+      const ttl = this.getTTL(session);
+
+      await this.client.set(key, JSON.stringify(session), {
+        ex: ttl,
+      });
+
+      callback(null);
+    } catch (err) {
+      console.error("Session set error:", err);
+      callback(err);
+    }
+  }
+
+  async destroy(sid: string, callback: (err?: any) => void) {
+    try {
+      const key = this.prefix + sid;
+      await this.client.del(key);
+      callback(null);
+    } catch (err) {
+      console.error("Session destroy error:", err);
+      callback(err);
+    }
+  }
+
+  async touch(sid: string, session: any, callback: (err?: any) => void) {
+    try {
+      const key = this.prefix + sid;
+      const ttl = this.getTTL(session);
+
+      await this.client.expire(key, ttl);
+      callback(null);
+    } catch (err) {
+      console.error("Session touch error:", err);
+      callback(err);
+    }
+  }
+
+  private getTTL(session: any): number {
+    if (session && session.cookie && session.cookie.maxAge) {
+      return Math.floor(session.cookie.maxAge / 1000);
+    }
+    return this.ttl;
+  }
+}
 
 // Serve static files from /public
 app.use(express.static(path.join(__dirname, "..", "public")));
@@ -89,6 +153,60 @@ function initializeAgentDB() {
 // Initialize on startup
 initializeAgentDB();
 
+// Initialize session middleware
+function initializeSession() {
+  const sessionConfig: session.SessionOptions = {
+    secret:
+      process.env.SESSION_SECRET || "fallback-secret-change-in-production",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === "production",
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      sameSite: process.env.NODE_ENV === "production" ? "lax" : "lax",
+    },
+    name: "chatrat.sid", // Custom session cookie name
+  };
+
+  // Use Upstash Redis if configured
+  if (
+    process.env.UPSTASH_REDIS_REST_URL &&
+    process.env.UPSTASH_REDIS_REST_TOKEN
+  ) {
+    try {
+      const redis = new Redis({
+        url: process.env.UPSTASH_REDIS_REST_URL,
+        token: process.env.UPSTASH_REDIS_REST_TOKEN,
+      });
+
+      const store = new UpstashRedisStore({
+        client: redis,
+        prefix: "chatrat:",
+        ttl: 86400, // 24 hours
+      });
+
+      sessionConfig.store = store as any;
+      console.log("Using Upstash Redis for session storage");
+    } catch (error) {
+      console.error("Failed to initialize Upstash Redis:", error);
+      console.log("Falling back to in-memory session storage");
+    }
+  } else {
+    console.warn(
+      "UPSTASH_REDIS_REST_URL or UPSTASH_REDIS_REST_TOKEN not configured"
+    );
+    console.log(
+      "Using in-memory session storage (not suitable for production)"
+    );
+  }
+
+  app.use(session(sessionConfig));
+}
+
+// Initialize session before routes
+initializeSession();
+
 // Middleware to check authentication
 async function requireAuth(
   req: AuthenticatedRequest,
@@ -134,7 +252,6 @@ app.get("/auth/github", (req: AuthenticatedRequest, res) => {
   }
 
   const baseURL = process.env.BASE_URL;
-
   const redirectUri = `${baseURL}/auth/github/callback`;
   const scope = "user:email";
   const state = Math.random().toString(36).substring(7);
@@ -142,22 +259,60 @@ app.get("/auth/github", (req: AuthenticatedRequest, res) => {
   // Store state in session for security
   req.session.oauthState = state;
 
-  const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(
-    redirectUri
-  )}&scope=${scope}&state=${state}`;
+  // Log for debugging
+  console.log("OAuth init - generated state:", state);
+  console.log("OAuth init - session ID:", req.sessionID);
 
-  console.log("redirecting to", redirectUri);
+  // Force session save before redirect
+  req.session.save((err) => {
+    if (err) {
+      console.error("Session save error:", err);
+      return res.status(500).json({ error: "Session error" });
+    }
 
-  res.redirect(githubAuthUrl);
+    const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(
+      redirectUri
+    )}&scope=${scope}&state=${state}`;
+
+    console.log("Redirecting to GitHub OAuth with state:", state);
+    return res.redirect(githubAuthUrl);
+  });
+
   return;
 });
 
 app.get("/auth/github/callback", async (req: AuthenticatedRequest, res) => {
   const { code, state } = req.query;
 
+  console.log("OAuth callback - received state:", state);
+  console.log("OAuth callback - session ID:", req.sessionID);
+  console.log("OAuth callback - session state:", req.session.oauthState);
+
   // Verify state parameter
   if (state !== req.session.oauthState) {
-    return res.status(400).json({ error: "Invalid state parameter" });
+    console.error(
+      "State mismatch - received:",
+      state,
+      "expected:",
+      req.session.oauthState
+    );
+    return res.status(400).send(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Authentication Error</title>
+          <style>
+            body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+            .error { color: #dc3545; }
+          </style>
+        </head>
+        <body>
+          <h1 class="error">Authentication Error</h1>
+          <p>Invalid state parameter. This might be due to session issues.</p>
+          <p>Please <a href="/auth/github">try again</a></p>
+        </body>
+      </html>
+    `);
   }
 
   if (!code) {
@@ -203,53 +358,56 @@ app.get("/auth/github/callback", async (req: AuthenticatedRequest, res) => {
     // Clean up state
     delete req.session.oauthState;
 
-    // For VSCode extension, we need to redirect to a special URI
-    const extensionRedirectUri = `vscode://ServietteLLC.chatrat/auth-callback?token=${encodeURIComponent(
-      access_token
-    )}&user=${encodeURIComponent(JSON.stringify(githubUser))}`;
+    // Save session before redirect
+    req.session.save((err) => {
+      if (err) {
+        console.error("Session save error:", err);
+      }
 
-    return res.send(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Authentication Successful</title>
-          <style>
-            body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-            .success { color: #28a745; }
-            .info { color: #17a2b8; margin-top: 20px; }
-          </style>
-        </head>
-        <body>
-          <h1 class="success">✅ Authentication Successful!</h1>
-          <p>Welcome, ${githubUser.name || githubUser.login}!</p>
-          <p class="info">Please wait for the "open in vscode" button to appear and do so.</p>
-          <script>
-            // Try to redirect to VSCode extension
-            setTimeout(() => {
-              window.location.href = '${extensionRedirectUri}';
-            }, 2000);
-          </script>
-        </body>
-      </html>
-    `);
+      // For VSCode extension, we need to redirect to a special URI
+      const extensionRedirectUri = `vscode://ServietteLLC.chatrat/auth-callback?token=${encodeURIComponent(
+        access_token
+      )}&user=${encodeURIComponent(JSON.stringify(githubUser))}`;
+
+      return res.send(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Authentication Successful</title>
+            <style>
+              body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+              .success { color: #28a745; }
+              .info { color: #17a2b8; margin-top: 20px; }
+            </style>
+          </head>
+          <body>
+            <h1 class="success">✅ Authentication Successful!</h1>
+            <p>Welcome, ${githubUser.name || githubUser.login}!</p>
+            <p class="info">Please wait for the "open in vscode" button to appear and do so.</p>
+            <script>
+              // Try to redirect to VSCode extension
+              setTimeout(() => {
+                window.location.href = '${extensionRedirectUri}';
+              }, 2000);
+            </script>
+          </body>
+        </html>
+      `);
+    });
   } catch (error) {
     console.error("GitHub OAuth error:", error);
     return res.status(500).json({ error: "Authentication failed" });
   }
+
+  return;
 });
 
 // Authentication status endpoint
-app.get("/auth/status", (req: AuthenticatedRequest, res) => {
-  if (req.session.githubToken && req.session.githubUser) {
-    res.json({
-      authenticated: true,
-      user: req.session.githubUser,
-    });
-  } else {
-    res.json({
-      authenticated: false,
-    });
-  }
+app.get("/auth/status", requireAuth, (req: AuthenticatedRequest, res) => {
+  res.json({
+    authenticated: true,
+    user: req.session.githubUser,
+  });
 });
 
 // Logout endpoint
@@ -554,6 +712,10 @@ app.get("/healthz", (req, res) => {
       agentdb_config: !!(
         process.env.AGENTDB_TOKEN && process.env.AGENTDB_API_KEY
       ),
+      upstash_redis: !!(
+        process.env.UPSTASH_REDIS_REST_URL &&
+        process.env.UPSTASH_REDIS_REST_TOKEN
+      ),
     },
   };
   res.status(200).json(status);
@@ -594,6 +756,13 @@ if (process.env.NODE_ENV !== "production") {
       !!(process.env.AGENTDB_TOKEN && process.env.AGENTDB_API_KEY)
     );
     console.log("- Session Secret:", !!process.env.SESSION_SECRET);
+    console.log(
+      "- Upstash Redis:",
+      !!(
+        process.env.UPSTASH_REDIS_REST_URL &&
+        process.env.UPSTASH_REDIS_REST_TOKEN
+      )
+    );
   });
 }
 
