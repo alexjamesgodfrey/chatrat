@@ -1,0 +1,5 @@
+
+
+> @chatrat/extension@0.1.0 build /Users/alexgodfrey/Developer/repo-mcp/apps/extension
+> tsc -p ./
+
