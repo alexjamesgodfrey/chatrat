@@ -133,8 +133,9 @@ app.get("/auth/github", (req: AuthenticatedRequest, res) => {
     return res.status(500).json({ error: "GitHub OAuth not configured" });
   }
 
-  const base = process.env.NODE_ENV === "production" ? "https" : "https";
-  const redirectUri = `${base}://${req.get("host")}/auth/github/callback`;
+  const baseURL = process.env.BASE_URL;
+
+  const redirectUri = `${baseURL}/auth/github/callback`;
   const scope = "user:email";
   const state = Math.random().toString(36).substring(7);
 
