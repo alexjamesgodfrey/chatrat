@@ -1,6 +1,7 @@
 import axios, { AxiosInstance } from "axios";
 import * as vscode from "vscode";
-import { AuthService } from "./authServiceV2";
+import { AuthService } from "./authService";
+import { ExecuteSqlSchema, SqlStatement } from "@chatrat/types";
 
 export interface DatabaseInfo {
   name: string;
@@ -82,45 +83,15 @@ export class ProxyService {
     return config.get<string>("serverBaseUrl") || "https://api.chatrat.cat";
   }
 
-  public async listDatabases(): Promise<DatabaseInfo[]> {
-    try {
-      const response = await this.httpClient.get("/api/agentdb/databases");
-      return response.data;
-    } catch (error) {
-      console.error("List databases error:", error);
-      throw new Error(
-        `Failed to list databases: ${this.getErrorMessage(error)}`
-      );
-    }
-  }
-
-  public async connectToDatabase(
-    dbName?: string,
-    dbType: string = "sqlite"
-  ): Promise<{ success: boolean; dbName: string; message: string }> {
-    try {
-      const response = await this.httpClient.post("/api/agentdb/connect", {
-        dbName,
-        dbType,
-      });
-      return response.data;
-    } catch (error) {
-      console.error("Connect to database error:", error);
-      throw new Error(
-        `Failed to connect to database: ${this.getErrorMessage(error)}`
-      );
-    }
-  }
-
   public async executeQuery(
-    sql: string,
-    params: any[] = []
+    statements: SqlStatement[]
   ): Promise<ExecuteResult> {
     try {
-      const response = await this.httpClient.post("/api/agentdb/execute", {
-        sql,
-        params,
-      });
+      const body: ExecuteSqlSchema = {
+        statements,
+      };
+      const response = await this.httpClient.post("/api/execute", body);
+
       return response.data;
     } catch (error) {
       console.error("Execute query error:", error);
@@ -197,25 +168,6 @@ export class ProxyService {
       return error.message;
     }
     return "Unknown error occurred";
-  }
-
-  // Batch operations for repository data
-  public async executeBatch(
-    queries: Array<{ sql: string; params?: any[] }>
-  ): Promise<ExecuteResult[]> {
-    const results: ExecuteResult[] = [];
-
-    for (const query of queries) {
-      try {
-        const result = await this.executeQuery(query.sql, query.params || []);
-        results.push(result);
-      } catch (error) {
-        console.error("Batch query error:", error);
-        throw error;
-      }
-    }
-
-    return results;
   }
 
   // Helper method to check server health

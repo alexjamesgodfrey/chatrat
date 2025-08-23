@@ -13,9 +13,7 @@ import {
 } from "./const";
 
 interface DatabaseProvider {
-  initialize(): Promise<void>;
   executeSql(statements: SqlStatement[]): Promise<void>;
-  listDatabases(): Promise<string[]>;
 }
 
 class AgentDBDatabase implements DatabaseProvider {
@@ -50,17 +48,6 @@ class AgentDBDatabase implements DatabaseProvider {
     this.connection = this.client.connect(this.token, this.dbName, dbType);
   }
 
-  async listDatabases(): Promise<string[]> {
-    if (!this.client) {
-      throw new Error("AgentDB client not initialized");
-    }
-
-    // also gives us size, last modified, etc
-    const databaseInfo = await this.client.listDatabases(this.token);
-
-    return databaseInfo.map((db) => db.name);
-  }
-
   async executeSql(statements: SqlStatement[]): Promise<void> {
     if (!this.connection) {
       throw new Error("AgentDB connection not initialized");
@@ -71,19 +58,7 @@ class AgentDBDatabase implements DatabaseProvider {
 }
 
 class PostgresDatabase implements DatabaseProvider {
-  listDatabases(): Promise<string[]> {
-    throw new Error("Method not implemented.");
-  }
-  listTables(): Promise<string[]> {
-    throw new Error("Method not implemented.");
-  }
-  getTableSchema(): Promise<any> {
-    throw new Error("Method not implemented.");
-  }
-  initialize(): Promise<void> {
-    throw new Error("Method not implemented.");
-  }
-  async executeSql() {
+  async executeSql(statements: SqlStatement[]) {
     throw new Error("Method not implemented.");
   }
 }
@@ -110,7 +85,6 @@ export async function getDatabaseProviderFromAuthenticatedRequest(
         throw new Error("AgentDB connection details not found in session");
       }
       return new AgentDBDatabase(req.session.agentDbConnection);
-
     case "postgres":
       throw new Error("We don't really support Postgres yet 😅");
     default:

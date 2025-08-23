@@ -3,7 +3,7 @@ import * as fs from "fs";
 import ignore from "ignore";
 import * as path from "path";
 import * as vscode from "vscode";
-import { AuthService } from "./authServiceV2";
+import { AuthService } from "./authService";
 import { ProxyService } from "./proxyService";
 
 interface FileData {
@@ -202,8 +202,7 @@ async function ensureDatabase(): Promise<void> {
 
     // List existing databases to check if user's database exists
     try {
-      const databases = await proxyService.listDatabases();
-      const dbExists = databases.some((db) => db.name === expectedDbName);
+      // TODO: CHECK IF DB EXISTS
 
       if (!dbExists) {
         // Database doesn't exist, create it from template
@@ -236,9 +235,7 @@ async function ensureDatabase(): Promise<void> {
       activeTemplateName = "alex-boiler";
     }
 
-    // Now connect to the database (whether it existed or was just created)
-    const result = await proxyService.connectToDatabase();
-    activeDbName = result.dbName;
+    activeDbName = expectedDbName;
 
     const outputChannel =
       vscode.window.createOutputChannel("Chatrat - Database");
@@ -439,8 +436,9 @@ async function storeInAgentDB(
 
     // Upsert repository record
     outputChannel.appendLine("\n--- Upserting Repository ---");
-    await proxyService.executeQuery(
-      `INSERT INTO repositories (id, name, workspace_path, total_files, total_size, last_updated)
+    await proxyService.executeQuery([
+      {
+        sql: `INSERT INTO repositories (id, name, workspace_path, total_files, total_size, last_updated)
        VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
        ON CONFLICT(id) DO UPDATE SET
          name = excluded.name,
@@ -448,15 +446,24 @@ async function storeInAgentDB(
          total_files = excluded.total_files,
          total_size = excluded.total_size,
          last_updated = CURRENT_TIMESTAMP`,
-      [repoId, repositoryName, workspacePath, files.length, totalSize]
-    );
+        params: [
+          repoId,
+          repositoryName,
+          workspacePath,
+          files.length,
+          totalSize,
+        ],
+      },
+    ]);
 
     // Delete existing files for this repository
     outputChannel.appendLine("\n--- Deleting Old Files ---");
-    await proxyService.executeQuery(
-      "DELETE FROM repository_files WHERE repository_id = ?",
-      [repoId]
-    );
+    await proxyService.executeQuery([
+      {
+        sql: "DELETE FROM repository_files WHERE repository_id = ?",
+        params: [repoId],
+      },
+    ]);
 
     // Insert files in batches
     outputChannel.appendLine("\n--- Inserting New Files ---");
@@ -474,11 +481,13 @@ async function storeInAgentDB(
 
       for (const file of batch) {
         try {
-          await proxyService.executeQuery(
-            `INSERT INTO repository_files (repository_id, file_path, content, size, created_at)
+          await proxyService.executeQuery([
+            {
+              sql: `INSERT INTO repository_files (repository_id, file_path, content, size, created_at)
              VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-            [repoId, file.path, file.content, file.size]
-          );
+              params: [repoId, file.path, file.content, file.size],
+            },
+          ]);
           successCount++;
         } catch (error: any) {
           errorCount++;
@@ -514,11 +523,14 @@ async function listStoredRepositories() {
   try {
     await ensureDatabase();
 
-    const result = await proxyService.executeQuery(
-      `SELECT name, workspace_path, total_files, total_size, last_updated
+    const result = await proxyService.executeQuery([
+      {
+        sql: `SELECT name, workspace_path, total_files, total_size, last_updated
        FROM repositories
-       ORDER BY last_updated DESC`
-    );
+       ORDER BY last_updated DESC`,
+        params: [],
+      },
+    ]);
 
     const outputChannel = vscode.window.createOutputChannel(
       "Stored Repositories"
@@ -559,8 +571,18 @@ async function clearDatabase() {
   try {
     await ensureDatabase();
 
-    await proxyService.executeQuery("DELETE FROM repository_files");
-    await proxyService.executeQuery("DELETE FROM repositories");
+    await proxyService.executeQuery([
+      {
+        sql: "DELETE FROM repository_files",
+        params: [],
+      },
+    ]);
+    await proxyService.executeQuery([
+      {
+        sql: "DELETE FROM repositories",
+        params: [],
+      },
+    ]);
 
     vscode.window.showInformationMessage(
       "Successfully cleared all repository data from AgentDB"
@@ -702,5 +724,7 @@ function formatBytes(bytes: number): string {
 }
 
 export function deactivate() {
-  console.log("Chatrat (AgentDB) extension is now deactivating! (NO-OP for now)");
+  console.log(
+    "Chatrat (AgentDB) extension is now deactivating! (NO-OP for now)"
+  );
 }

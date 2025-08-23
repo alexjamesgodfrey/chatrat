@@ -37,12 +37,6 @@ export type AuthenticatedSession = z.infer<typeof AuthenticatedRequestSchema>;
 
 export type AuthenticatedRequest = Request & AuthenticatedSession;
 
-export const SqlStatement = z.object({
-  sql: z.string(),
-  params: z.array(z.string()).optional().default([]),
-});
-export type SqlStatement = z.infer<typeof SqlStatement>;
-
 // export interface AuthenticatedRequest extends Request {
 //   session: session.Session & {
 //     githubToken?: string;

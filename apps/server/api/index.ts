@@ -5,9 +5,24 @@ import dotenv from "dotenv";
 import express from "express";
 import session from "express-session";
 import path from "path";
-import { getUserDbName } from "../lib/getUserDbName";
-import { requireAuth } from "../middleware/requireAuth";
-import { AuthenticatedRequest } from "../types";
+
+// Import route modules
+import agentdbExecuteRouter, {
+  setAgentDbService as setAgentDbServiceExecute,
+} from "../routes/agentdbExecute";
+import connectRouter, {
+  setAgentDbService as setAgentDbServiceConnect,
+} from "../routes/connect";
+import copyRouter, {
+  setAgentDbService as setAgentDbServiceCopy,
+} from "../routes/copy";
+import executeSqlRouter from "../routes/executeSql";
+import healthRouter, {
+  setAgentDbService as setAgentDbServiceHealth,
+} from "../routes/health";
+import mcpSlugRouter, {
+  setAgentDbService as setAgentDbServiceMcp,
+} from "../routes/mcpSlug";
 
 // Load environment variables
 dotenv.config();
@@ -112,13 +127,6 @@ app.use(express.static(path.join(__dirname, "..", "public")));
 
 // Types
 
-interface GitHubUser {
-  id: number;
-  login: string;
-  name: string;
-  email: string;
-}
-
 // AgentDB service instance
 let agentDbService: DatabaseService | undefined;
 
@@ -134,6 +142,15 @@ function initializeAgentDB() {
 
   agentDbService = new DatabaseService(baseUrl, apiKey);
   console.log("AgentDB service initialized");
+
+  // Inject the service into route modules
+  if (agentDbService) {
+    setAgentDbServiceExecute(agentDbService);
+    setAgentDbServiceConnect(agentDbService);
+    setAgentDbServiceCopy(agentDbService);
+    setAgentDbServiceHealth(agentDbService);
+    setAgentDbServiceMcp(agentDbService);
+  }
 }
 
 // Initialize on startup
@@ -193,211 +210,21 @@ function initializeSession() {
 // Initialize session before routes
 initializeSession();
 
-// Middleware to check authentication
-
-// Connect to database
-app.post(
-  "/api/agentdb/connect",
-  requireAuth,
-  async (req: AuthenticatedRequest, res) => {
-    try {
-      if (!agentDbService) {
-        return res
-          .status(500)
-          .json({ error: "AgentDB service not initialized" });
-      }
-
-      const token = process.env.AGENTDB_TOKEN;
-      if (!token) {
-        return res.status(500).json({ error: "AgentDB token not configured" });
-      }
-
-      const { dbName, dbType = "sqlite" } = req.body;
-      const targetDbName = dbName || getUserDbName(req.session.githubUser!);
-
-      // For security, ensure users can only access their own databases
-      const userDbName = getUserDbName(req.session.githubUser!);
-      if (targetDbName !== userDbName) {
-        return res
-          .status(403)
-          .json({ error: "Access denied to this database" });
-      }
-
-      const connection = agentDbService.connect(token, targetDbName, dbType);
-
-      // Store connection info in session for later use
-      req.session.agentDbConnection = {
-        dbName: targetDbName,
-        dbType,
-      };
-
-      return res.json({
-        success: true,
-        dbName: targetDbName,
-        message: "Connected to database",
-      });
-    } catch (error) {
-      console.error("AgentDB connect error:", error);
-      return res.status(500).json({ error: "Failed to connect to database" });
-    }
-  }
-);
-
-// Execute SQL queries
-app.post(
-  "/api/agentdb/execute",
-  requireAuth,
-  async (req: AuthenticatedRequest, res) => {
-    try {
-      if (!agentDbService) {
-        return res
-          .status(500)
-          .json({ error: "AgentDB service not initialized" });
-      }
-
-      const token = process.env.AGENTDB_TOKEN;
-      if (!token) {
-        return res.status(500).json({ error: "AgentDB token not configured" });
-      }
-
-      const { sql, params = [] } = req.body;
-      const userDbName = getUserDbName(req.session.githubUser!);
-
-      if (!sql) {
-        return res.status(400).json({ error: "SQL query is required" });
-      }
-
-      const connection = agentDbService.connect(token, userDbName, "sqlite");
-      const result = await connection.execute({ sql, params });
-
-      return res.json(result);
-    } catch (error) {
-      console.error("AgentDB execute error:", error);
-      return res.status(500).json({ error: "Failed to execute query" });
-    }
-  }
-);
-
-// Copy database (for template application)
-app.post(
-  "/api/agentdb/copy-database",
-  requireAuth,
-  async (req: AuthenticatedRequest, res) => {
-    try {
-      if (!agentDbService) {
-        return res
-          .status(500)
-          .json({ error: "AgentDB service not initialized" });
-      }
-
-      const token = process.env.AGENTDB_TOKEN;
-      if (!token) {
-        return res.status(500).json({ error: "AgentDB token not configured" });
-      }
-
-      const { sourceDbName, sourceDbType = "sqlite", targetDbName } = req.body;
-
-      // Use provided target name or calculate from user
-      const userDbName = targetDbName || getUserDbName(req.session.githubUser!);
-
-      if (!sourceDbName) {
-        return res
-          .status(400)
-          .json({ error: "Source database name is required" });
-      }
-
-      // Ensure the target database name matches the user's expected database
-      const expectedDbName = getUserDbName(req.session.githubUser!);
-      if (userDbName !== expectedDbName) {
-        return res
-          .status(403)
-          .json({ error: "Access denied to create this database" });
-      }
-
-      const result = await agentDbService.copyDatabase(
-        token,
-        sourceDbName,
-        sourceDbType,
-        token,
-        userDbName
-      );
-
-      return res.json(result);
-    } catch (error) {
-      console.error("AgentDB copy database error:", error);
-      return res.status(500).json({ error: "Failed to copy database" });
-    }
-  }
-);
-
-// Create MCP slug
-app.post(
-  "/api/agentdb/create-mcp-slug",
-  requireAuth,
-  async (req: AuthenticatedRequest, res) => {
-    try {
-      if (!agentDbService) {
-        return res
-          .status(500)
-          .json({ error: "AgentDB service not initialized" });
-      }
-
-      const token = process.env.AGENTDB_TOKEN;
-      const apiKey = process.env.AGENTDB_API_KEY;
-
-      if (!token || !apiKey) {
-        return res
-          .status(500)
-          .json({ error: "AgentDB credentials not configured" });
-      }
-
-      const userDbName = getUserDbName(req.session.githubUser!);
-
-      const result = await agentDbService.createMcpSlug({
-        key: apiKey,
-        token,
-        dbType: "sqlite",
-        dbName: userDbName,
-        template: "repo-context-template-real",
-      });
-
-      return res.json(result);
-    } catch (error) {
-      console.error("AgentDB create MCP slug error:", error);
-      return res.status(500).json({ error: "Failed to create MCP slug" });
-    }
-  }
-);
-
-// Health check
-app.get("/healthz", (req, res) => {
-  const status = {
-    status: "ok",
-    timestamp: new Date().toISOString(),
-    services: {
-      agentdb: !!agentDbService,
-      github_oauth: !!(
-        process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET
-      ),
-      agentdb_config: !!(
-        process.env.AGENTDB_TOKEN && process.env.AGENTDB_API_KEY
-      ),
-      upstash_redis: !!(
-        process.env.UPSTASH_REDIS_REST_URL &&
-        process.env.UPSTASH_REDIS_REST_TOKEN
-      ),
-    },
-  };
-  res.status(200).json(status);
-});
+// Use route modules
+app.use(agentdbExecuteRouter);
+app.use(connectRouter);
+app.use(copyRouter);
+app.use(executeSqlRouter);
+app.use(healthRouter);
+app.use(mcpSlugRouter);
 
 // Error handling middleware
 app.use(
   (
     err: any,
-    req: express.Request,
+    _req: express.Request,
     res: express.Response,
-    next: express.NextFunction
+    _next: express.NextFunction
   ) => {
     console.error("Unhandled error:", err);
     res.status(500).json({ error: "Internal server error" });
@@ -405,7 +232,7 @@ app.use(
 );
 
 // 404 handler
-app.use((req, res) => {
+app.use((_req, res) => {
   res.status(404).json({ error: "Not found" });
 });
 
