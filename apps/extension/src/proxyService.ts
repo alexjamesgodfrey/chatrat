@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from "axios";
 import * as vscode from "vscode";
-import { AuthService } from "./authService";
+import { AuthService } from "./authServiceV2";
 
 export interface DatabaseInfo {
   name: string;

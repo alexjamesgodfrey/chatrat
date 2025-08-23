@@ -3,7 +3,7 @@ import * as fs from "fs";
 import ignore from "ignore";
 import * as path from "path";
 import * as vscode from "vscode";
-import { AuthService } from "./authService";
+import { AuthService } from "./authServiceV2";
 import { ProxyService } from "./proxyService";
 
 interface FileData {
