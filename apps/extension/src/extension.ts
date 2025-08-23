@@ -17,7 +17,6 @@ let authService: AuthService;
 let proxyService: ProxyService;
 let activeDbName: string | undefined;
 let activeTemplateName: string | undefined;
-let uriHandler: vscode.Disposable | undefined;
 
 export async function activate(context: vscode.ExtensionContext) {
   console.log("Chatrat (AgentDB) extension is now active!");
@@ -28,17 +27,6 @@ export async function activate(context: vscode.ExtensionContext) {
 
   // Initialize authentication
   await authService.initialize();
-
-  // Register a single URI handler for OAuth callbacks
-  // This will be used by the AuthService
-  uriHandler = vscode.window.registerUriHandler({
-    handleUri: async (uri: vscode.Uri) => {
-      console.log("Received URI:", uri.toString());
-      // Pass the URI to the auth service for processing
-      await authService.handleAuthCallback(uri);
-    },
-  });
-  context.subscriptions.push(uriHandler);
 
   // Register commands
   const captureCommand = vscode.commands.registerCommand(
@@ -714,8 +702,5 @@ function formatBytes(bytes: number): string {
 }
 
 export function deactivate() {
-  // Clean up the URI handler if it exists
-  if (uriHandler) {
-    uriHandler.dispose();
-  }
+  console.log("Chatrat (AgentDB) extension is now deactivating! (NO-OP for now)");
 }

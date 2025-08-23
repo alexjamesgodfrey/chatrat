@@ -182,12 +182,6 @@ Then press `F5` in VSCode to launch the extension debugger.
 
 The server exposes these endpoints:
 
-### Authentication
-- `GET /auth/github` - Start GitHub OAuth flow
-- `GET /auth/github/callback` - OAuth callback
-- `GET /auth/status` - Check authentication status
-- `POST /auth/logout` - Logout
-
 ### AgentDB Proxy
 - `GET /api/agentdb/databases` - List databases
 - `POST /api/agentdb/connect` - Connect to database

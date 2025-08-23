@@ -154,12 +154,6 @@ npm run dev     # Start server with hot reload
 
 ## 📚 API Reference
 
-### Authentication Endpoints
-- `GET /auth/github` - Start GitHub OAuth flow
-- `GET /auth/github/callback` - OAuth callback handler
-- `GET /auth/status` - Check authentication status
-- `POST /auth/logout` - Logout user
-
 ### AgentDB Proxy Endpoints
 - `GET /api/agentdb/databases` - List user databases
 - `POST /api/agentdb/connect` - Connect to database
