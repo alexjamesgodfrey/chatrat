@@ -1,11 +1,13 @@
 import { DatabaseService } from "@agentdb/sdk";
 import { Redis } from "@upstash/redis";
-import axios from "axios";
 import cors from "cors";
 import dotenv from "dotenv";
-import express, { Request } from "express";
+import express from "express";
 import session from "express-session";
 import path from "path";
+import { getUserDbName } from "../lib/getUserDbName";
+import { requireAuth } from "../middleware/requireAuth";
+import { AuthenticatedRequest } from "../types";
 
 // Load environment variables
 dotenv.config();
@@ -109,22 +111,6 @@ class UpstashRedisStore extends (session.Store as any) {
 app.use(express.static(path.join(__dirname, "..", "public")));
 
 // Types
-interface AuthenticatedRequest extends Request {
-  session: session.Session & {
-    githubToken?: string;
-    githubUser?: {
-      id: number;
-      login: string;
-      name: string;
-      email: string;
-    };
-    oauthState?: string;
-    agentDbConnection?: {
-      dbName: string;
-      dbType: string;
-    };
-  };
-}
 
 interface GitHubUser {
   id: number;
@@ -208,75 +194,6 @@ function initializeSession() {
 initializeSession();
 
 // Middleware to check authentication
-async function requireAuth(
-  req: AuthenticatedRequest,
-  res: express.Response,
-  next: express.NextFunction
-) {
-  // Check for Bearer token (from VSCode extension)
-  const authHeader = req.headers.authorization;
-  if (authHeader && authHeader.startsWith("Bearer ")) {
-    const token = authHeader.substring(7);
-
-    try {
-      // Verify it's a valid GitHub token
-      const userResponse = await axios.get("https://api.github.com/user", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/vnd.github.v3+json",
-        },
-      });
-
-      // Attach user info to request
-      req.session.githubUser = userResponse.data;
-      req.session.githubToken = token;
-      return next();
-    } catch (error) {
-      return res.status(401).json({ error: "Invalid GitHub token" });
-    }
-  }
-
-  // Fall back to session-based auth (for web interface)
-  if (!req.session.githubToken || !req.session.githubUser) {
-    return res.status(401).json({ error: "Authentication required" });
-  }
-
-  return next();
-}
-
-// AgentDB Proxy Endpoints
-// Helper function to get user-specific database name
-function getUserDbName(githubUser: GitHubUser): string {
-  const base = "repo-context";
-  const safeUser = githubUser.login.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 64);
-  return `${base}-${safeUser || "unknown"}`.slice(0, 32);
-}
-
-// List databases
-app.get(
-  "/api/agentdb/databases",
-  requireAuth,
-  async (req: AuthenticatedRequest, res) => {
-    try {
-      if (!agentDbService) {
-        return res
-          .status(500)
-          .json({ error: "AgentDB service not initialized" });
-      }
-
-      const token = process.env.AGENTDB_TOKEN;
-      if (!token) {
-        return res.status(500).json({ error: "AgentDB token not configured" });
-      }
-
-      const databases = await agentDbService.listDatabases(token);
-      return res.json(databases);
-    } catch (error) {
-      console.error("AgentDB list databases error:", error);
-      return res.status(500).json({ error: "Failed to list databases" });
-    }
-  }
-);
 
 // Connect to database
 app.post(
@@ -357,53 +274,6 @@ app.post(
     } catch (error) {
       console.error("AgentDB execute error:", error);
       return res.status(500).json({ error: "Failed to execute query" });
-    }
-  }
-);
-
-// Natural language to SQL
-app.post(
-  "/api/agentdb/nl-to-sql",
-  requireAuth,
-  async (req: AuthenticatedRequest, res) => {
-    try {
-      if (!agentDbService) {
-        return res
-          .status(500)
-          .json({ error: "AgentDB service not initialized" });
-      }
-
-      const token = process.env.AGENTDB_TOKEN;
-      if (!token) {
-        return res.status(500).json({ error: "AgentDB token not configured" });
-      }
-
-      const {
-        query,
-        context = null,
-        templateName = "repo-context-template",
-      } = req.body;
-      const userDbName = getUserDbName(req.session.githubUser!);
-
-      if (!query) {
-        return res
-          .status(400)
-          .json({ error: "Natural language query is required" });
-      }
-
-      const connection = agentDbService.connect(token, userDbName, "sqlite");
-      const result = await connection.naturalLanguageToSql(
-        query,
-        context,
-        templateName
-      );
-
-      return res.json(result);
-    } catch (error) {
-      console.error("AgentDB NL to SQL error:", error);
-      return res
-        .status(500)
-        .json({ error: "Failed to process natural language query" });
     }
   }
 );
