@@ -2,7 +2,14 @@
   "name": "chatrat",
   "displayName": "Chatrat: expose code in real time via MCP",
   "description": "Indexes repository files and stores them in AgentDB for MCP server integration",
-  "repository": "https://github.com/alexjamesgodfrey/chatrat",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alexjamesgodfrey/chatrat.git"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "ServietteLLC"
+  },
   "engines": {
     "vscode": "^1.74.0"
   },
