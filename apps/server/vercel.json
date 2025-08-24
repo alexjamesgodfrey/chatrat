@@ -1,6 +1,6 @@
 {
   "functions": {
-    "**/*.js": {
+    "/src/api/**/*.js": {
       "maxDuration": 60
     }
   },
