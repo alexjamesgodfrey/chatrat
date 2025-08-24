@@ -41,6 +41,9 @@ importers:
       '@agentdb/sdk':
         specifier: ^1.1.12
         version: 1.1.12
+      '@chatrat/types':
+        specifier: workspace:*
+        version: link:../../packages/types
       '@types/express':
         specifier: ^4.17.23
         version: 4.17.23
@@ -75,9 +78,6 @@ importers:
         specifier: ^4.1.0
         version: 4.1.1
     devDependencies:
-      '@chatrat/types':
-        specifier: workspace:*
-        version: link:../../packages/types
       '@types/cors':
         specifier: ^2.8.17
         version: 2.8.19
