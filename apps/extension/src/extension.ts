@@ -177,7 +177,7 @@ export async function activate(context: vscode.ExtensionContext) {
   if (!serverHealthy) {
     vscode.window
       .showWarningMessage(
-        "Authentication server is not available. Please ensure the server is running.",
+        "Server is not available. This is our fault. Please report it",
         "Open Settings"
       )
       .then((selection) => {
