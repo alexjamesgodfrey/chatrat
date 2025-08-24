@@ -1,0 +1,216 @@
+name: Publish VS Code Extension
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: apps/extension/package-lock.json
+
+      - name: Install dependencies
+        working-directory: apps/extension
+        run: npm ci
+
+      # - name: Run tests (if available)
+      #   working-directory: apps/extension
+      #   run: |
+      #     if npm run | grep -q "test"; then
+      #       npm test
+      #     else
+      #       echo "No tests found, skipping"
+      #     fi
+
+      - name: Analyze commit messages for version bump
+        id: version_bump
+        run: |
+          # Get commit messages since last tag or from beginning
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -z "$LAST_TAG" ]; then
+            COMMITS=$(git log --pretty=format:"%s" --since="24 hours ago")
+          else
+            COMMITS=$(git log --pretty=format:"%s" ${LAST_TAG}..HEAD)
+          fi
+
+          echo "Analyzing commits:"
+          echo "$COMMITS"
+
+          # Check for breaking changes or feat: prefix
+          if echo "$COMMITS" | grep -qiE '^(feat|feature)(\(.+\))?\!?:' || echo "$COMMITS" | grep -qiE 'BREAKING CHANGE'; then
+            echo "bump_type=minor" >> $GITHUB_OUTPUT
+            echo "Found feature commits - minor version bump"
+          else
+            echo "bump_type=patch" >> $GITHUB_OUTPUT
+            echo "No feature commits found - patch version bump"
+          fi
+
+      - name: Bump version
+        id: version
+        working-directory: apps/extension
+        run: |
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Get current version
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "Current version: $CURRENT_VERSION"
+
+          # Bump version based on commit analysis
+          if [ "${{ steps.version_bump.outputs.bump_type }}" = "minor" ]; then
+            NEW_VERSION=$(npm version minor --no-git-tag-version)
+          else
+            NEW_VERSION=$(npm version patch --no-git-tag-version)
+          fi
+
+          # Remove 'v' prefix if present
+          NEW_VERSION=${NEW_VERSION#v}
+
+          echo "New version: $NEW_VERSION"
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Install vsce
+        run: npm install -g @vscode/vsce
+
+      - name: Validate extension package
+        working-directory: apps/extension
+        run: |
+          # Validate package.json
+          if ! node -e "require('./package.json')"; then
+            echo "Invalid package.json"
+            exit 1
+          fi
+
+          # Check required fields
+          PUBLISHER=$(node -p "require('./package.json').publisher || ''" | tr -d '"')
+          NAME=$(node -p "require('./package.json').name || ''" | tr -d '"')
+
+          if [ -z "$PUBLISHER" ]; then
+            echo "Error: Publisher not specified in package.json"
+            exit 1
+          fi
+
+          if [ -z "$NAME" ]; then
+            echo "Error: Name not specified in package.json"
+            exit 1
+          fi
+
+          echo "Extension: $PUBLISHER.$NAME"
+
+      - name: Package extension
+        working-directory: apps/extension
+        run: |
+          echo "Packaging extension..."
+          vsce package --out extension-${{ steps.version.outputs.version }}.vsix
+
+          # Verify the package was created
+          if [ ! -f "extension-${{ steps.version.outputs.version }}.vsix" ]; then
+            echo "Error: Extension package not created"
+            exit 1
+          fi
+
+          echo "Package created successfully"
+          ls -la *.vsix
+
+      - name: Check if version already exists in marketplace
+        id: check_version
+        working-directory: apps/extension
+        run: |
+          PUBLISHER=$(node -p "require('./package.json').publisher")
+          NAME=$(node -p "require('./package.json').name")
+          VERSION="${{ steps.version.outputs.version }}"
+
+          # Check if version exists (this will exit with code 1 if version doesn't exist)
+          if vsce show "$PUBLISHER.$NAME@$VERSION" >/dev/null 2>&1; then
+            echo "version_exists=true" >> $GITHUB_OUTPUT
+            echo "Version $VERSION already exists in marketplace"
+          else
+            echo "version_exists=false" >> $GITHUB_OUTPUT
+            echo "Version $VERSION is new, proceeding with publish"
+          fi
+
+      - name: Publish to VS Code Marketplace
+        if: steps.check_version.outputs.version_exists == 'false'
+        working-directory: apps/extension
+        run: |
+          echo "Publishing extension to VS Code Marketplace..."
+          vsce publish --packagePath "extension-${{ steps.version.outputs.version }}.vsix" --pat ${{ secrets.VSCE_TOKEN }} --no-dependencies
+          echo "Extension published successfully!"
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_TOKEN }}
+
+      - name: Create Git tag
+        if: steps.check_version.outputs.version_exists == 'false'
+        run: |
+          git tag -a "v${{ steps.version.outputs.version }}" -m "Release version ${{ steps.version.outputs.version }}"
+          git push origin "v${{ steps.version.outputs.version }}"
+
+      - name: Create GitHub Release
+        if: steps.check_version.outputs.version_exists == 'false'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: Release v${{ steps.version.outputs.version }}
+          files: apps/extension/extension-${{ steps.version.outputs.version }}.vsix
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Commit version bump back to repository
+        if: steps.check_version.outputs.version_exists == 'false'
+        run: |
+          # Add the updated package.json
+          git add apps/extension/package.json
+
+          # Check if there are changes to commit
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: bump extension version to ${{ steps.version.outputs.version }}"
+            
+            # Push with retry logic
+            for i in {1..3}; do
+              if git push origin main; then
+                echo "Successfully pushed version bump"
+                break
+              else
+                echo "Push attempt $i failed, retrying..."
+                git pull --rebase origin main
+                sleep 2
+              fi
+            done
+          fi
+
+      - name: Report results
+        if: always()
+        run: |
+          echo "## Workflow Results" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version:** ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Bump Type:** ${{ steps.version_bump.outputs.bump_type }}" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ steps.check_version.outputs.version_exists }}" = "true" ]; then
+            echo "- **Status:** Version already exists, skipped publishing" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- **Status:** Published successfully" >> $GITHUB_STEP_SUMMARY
+          fi
