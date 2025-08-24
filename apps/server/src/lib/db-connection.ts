@@ -13,6 +13,7 @@ import {
 } from "./const";
 import { SqlResults, SqlStatement } from "@chatrat/types";
 import { validateAgentDbString } from "./validate-db";
+import { ValidationError } from "@agentdb/sdk";
 
 class AgentDBDatabase implements DatabaseProvider {
   private token: string;
@@ -72,12 +73,18 @@ class AgentDBDatabase implements DatabaseProvider {
 
   async seedDatabaseIfNecessary(): Promise<void> {
     const templateNames = [CHATRAT_TEMPLATE_NAME];
-    this.client?._createDatabaseWithTemplates(
-      this.token,
-      this.dbName,
-      this.dbType,
-      templateNames
-    );
+    try {
+      await this.client?._createDatabaseWithTemplates(
+        this.token,
+        this.dbName,
+        this.dbType,
+        templateNames
+      );
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        return;
+      } 
+    }
   }
 }
 

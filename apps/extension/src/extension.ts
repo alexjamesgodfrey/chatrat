@@ -6,6 +6,13 @@ import * as vscode from "vscode";
 import { AuthService } from "./authService";
 import { ProxyService } from "./proxyService";
 
+const theOneAndOnlyOutputChannel = vscode.window.createOutputChannel("Chatrat");
+theOneAndOnlyOutputChannel.show(true);
+
+function debugLog(...args: any[]) {
+  theOneAndOnlyOutputChannel.appendLine(args.join(" "));
+}
+
 interface FileData {
   path: string;
   content: string;
@@ -21,8 +28,6 @@ let activeTemplateName: string | undefined;
 const databaseProvisionedKey = "databaseProvisionedReal2";
 
 export async function activate(context: vscode.ExtensionContext) {
-  console.log("Chatrat (AgentDB) extension is now active!");
-
   // Initialize services
   authService = AuthService.getInstance(context);
   proxyService = ProxyService.getInstance(authService);
@@ -170,14 +175,8 @@ async function createDatabaseWithTemplate(context: vscode.ExtensionContext) {
     // The copyDatabase function should copy the template to a new database with the user's name
     const response = await proxyService.checkOrSeedDatabase();
 
-    const outputChannel = vscode.window.createOutputChannel(
-      "Chatrat - Create Database With Template"
-    );
-    outputChannel.show(true);
-    outputChannel.appendLine(
-      `Check or seed database response: ${JSON.stringify(response)}`
-    );
-    outputChannel.appendLine(`Database provisioned successfully ✅`);
+    debugLog(`Check or seed database response: ${JSON.stringify(response)}`);
+    debugLog(`Database provisioned successfully ✅`);
 
     // save to vscode.workspace that we provisioned the database
     context.globalState.update(databaseProvisionedKey, true);
@@ -189,21 +188,15 @@ async function createDatabaseWithTemplate(context: vscode.ExtensionContext) {
 
 async function ensureDatabase(context: vscode.ExtensionContext): Promise<void> {
   try {
-    const outputChannel = vscode.window.createOutputChannel(
-      "Chatrat - Ensure Database"
-    );
-
     if (context.globalState.get(databaseProvisionedKey)) {
-      outputChannel.appendLine(`Database already provisioned`);
-      outputChannel.show();
+      debugLog(`Database already provisioned`);
       return;
     }
 
-    outputChannel.appendLine(`Provisioning database...`);
+    debugLog(`Provisioning database...`);
     await createDatabaseWithTemplate(context);
 
-    outputChannel.appendLine(`Database ready`);
-    outputChannel.show();
+    debugLog(`Database ready`);
   } catch (error) {
     console.error("Database connection error:", error);
     throw new Error(`Failed to connect to database: ${error}`);
@@ -241,10 +234,8 @@ async function createAndStoreMcpSlug(context: vscode.ExtensionContext) {
         }
       });
 
-    const outputChannel = vscode.window.createOutputChannel("MCP URL Debug");
-    outputChannel.appendLine(`New MCP Slug: ${slugResponse.slug}`);
-    outputChannel.appendLine(`New MCP URL: ${slugResponse.shortUrl}`);
-    outputChannel.show();
+    debugLog(`New MCP Slug: ${slugResponse.slug}`);
+    debugLog(`New MCP URL: ${slugResponse.shortUrl}`);
     return slugResponse.shortUrl;
   } catch (error) {
     console.error("Create MCP slug error:", error);
@@ -329,25 +320,20 @@ async function captureAndSendRepository(context: vscode.ExtensionContext) {
           )
           .then((selection) => {
             if (selection === "View Details") {
-              const outputChannel =
-                vscode.window.createOutputChannel("Chatrat");
-              outputChannel.appendLine(`Repository: ${repositoryName}`);
-              outputChannel.appendLine(`Files stored: ${files.length}`);
-              outputChannel.appendLine(
+              debugLog(`Repository: ${repositoryName}`);
+              debugLog(`Files stored: ${files.length}`);
+              debugLog(
                 `Total size: ${formatBytes(
                   files.reduce((acc, f) => acc + f.size, 0)
                 )}`
               );
-              outputChannel.appendLine(`Database: ${activeDbName}`);
-              outputChannel.appendLine(`Template: ${activeTemplateName}`);
-              outputChannel.appendLine(
-                `Timestamp: ${new Date().toISOString()}`
-              );
+              debugLog(`Database: ${activeDbName}`);
+              debugLog(`Template: ${activeTemplateName}`);
+              debugLog(`Timestamp: ${new Date().toISOString()}`);
               if (errors.length > 0) {
-                outputChannel.appendLine("\nSkipped files:");
-                errors.forEach((err) => outputChannel.appendLine(`  - ${err}`));
+                debugLog("\nSkipped files:");
+                errors.forEach((err) => debugLog(`  - ${err}`));
               }
-              outputChannel.show();
             }
           });
       } catch (error: any) {
@@ -359,15 +345,10 @@ async function captureAndSendRepository(context: vscode.ExtensionContext) {
           )
           .then((selection) => {
             if (selection === "View Logs") {
-              const outputChannel =
-                vscode.window.createOutputChannel("Chatrat");
-              outputChannel.appendLine("Error Details:");
-              outputChannel.appendLine(JSON.stringify(error, null, 2));
-              outputChannel.appendLine("\nStack Trace:");
-              outputChannel.appendLine(
-                error.stack || "No stack trace available"
-              );
-              outputChannel.show();
+              debugLog("Error Details:");
+              debugLog(JSON.stringify(error, null, 2));
+              debugLog("\nStack Trace:");
+              debugLog(error.stack || "No stack trace available");
             }
           });
       }
@@ -402,21 +383,16 @@ async function storeInAgentDB(
   workspacePath: string,
   files: FileData[]
 ) {
-  const outputChannel = vscode.window.createOutputChannel(
-    "AgentDB Storage Debug"
-  );
-  outputChannel.show();
-
   try {
     const repoId = getRepositoryKey(repositoryName, workspacePath);
-    outputChannel.appendLine(`Repository ID: ${repoId}`);
-    outputChannel.appendLine(`Repository Name: ${repositoryName}`);
-    outputChannel.appendLine(`Total Files to Store: ${files.length}`);
+    debugLog(`Repository ID: ${repoId}`);
+    debugLog(`Repository Name: ${repositoryName}`);
+    debugLog(`Total Files to Store: ${files.length}`);
 
     const totalSize = files.reduce((acc, f) => acc + f.size, 0);
 
     // Upsert repository record
-    outputChannel.appendLine("\n--- Upserting Repository ---");
+    debugLog("\n--- Upserting Repository ---");
     while (true) {
       await sleep(10000);
 
@@ -440,7 +416,7 @@ async function storeInAgentDB(
         },
       ]);
 
-      outputChannel.appendLine(`Result: ${JSON.stringify(result)}`);
+      debugLog(`Result: ${JSON.stringify(result)}`);
 
       if (result.results?.[0]?.rows?.length) {
         break;
@@ -448,7 +424,7 @@ async function storeInAgentDB(
     }
 
     // Delete existing files for this repository
-    outputChannel.appendLine("\n--- Deleting Old Files ---");
+    debugLog("\n--- Deleting Old Files ---");
     await proxyService.executeQuery([
       {
         sql: "DELETE FROM repository_files WHERE repository_id = ?",
@@ -457,14 +433,14 @@ async function storeInAgentDB(
     ]);
 
     // Insert files in batches
-    outputChannel.appendLine("\n--- Inserting New Files ---");
+    debugLog("\n--- Inserting New Files ---");
     const batchSize = 10;
     let successCount = 0;
     let errorCount = 0;
 
     for (let i = 0; i < files.length; i += batchSize) {
       const batch = files.slice(i, i + batchSize);
-      outputChannel.appendLine(
+      debugLog(
         `Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(
           files.length / batchSize
         )}`
@@ -483,7 +459,7 @@ async function storeInAgentDB(
         successCount++;
       } catch (error: any) {
         errorCount++;
-        outputChannel.appendLine(
+        debugLog(
           `  ❌ Error: Failed to insert batch with files ${batch
             .map((f) => f.path)
             .join(", ")}- ${error.message}`
@@ -495,9 +471,9 @@ async function storeInAgentDB(
       }
     }
 
-    outputChannel.appendLine(`\n--- Summary ---`);
-    outputChannel.appendLine(`Successfully inserted: ${successCount} files`);
-    outputChannel.appendLine(`Failed to insert: ${errorCount} files`);
+    debugLog(`\n--- Summary ---`);
+    debugLog(`Successfully inserted: ${successCount} files`);
+    debugLog(`Failed to insert: ${errorCount} files`);
 
     if (successCount === 0 && files.length > 0) {
       throw new Error(
@@ -505,9 +481,9 @@ async function storeInAgentDB(
       );
     }
   } catch (error: any) {
-    outputChannel.appendLine(`\n--- CRITICAL ERROR ---`);
-    outputChannel.appendLine(`Error: ${error.message || error}`);
-    outputChannel.appendLine(`Stack: ${error.stack || "No stack trace"}`);
+    debugLog(`\n--- CRITICAL ERROR ---`);
+    debugLog(`Error: ${error.message || error}`);
+    debugLog(`Stack: ${error.stack || "No stack trace"}`);
     throw error;
   }
 }
@@ -717,7 +693,5 @@ function formatBytes(bytes: number): string {
 }
 
 export function deactivate() {
-  console.log(
-    "Chatrat (AgentDB) extension is now deactivating! (NO-OP for now)"
-  );
+  /* NO-OP */
 }

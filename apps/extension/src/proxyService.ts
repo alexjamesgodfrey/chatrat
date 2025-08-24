@@ -110,12 +110,6 @@ export class ProxyService {
       const response = await this.httpClient.post("/api/check-or-seed");
       return response.data;
     } catch (error) {
-      console.error("Check or seed database error:", error);
-      const outputChannel = vscode.window.createOutputChannel(
-        "Chatrat - Check or Seed Database"
-      );
-      outputChannel.appendLine(`Check or seed database error: ${error}`);
-      outputChannel.show();
       throw new Error(
         `Failed to check or seed database: ${this.getErrorMessage(error)}`
       );

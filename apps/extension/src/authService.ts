@@ -53,41 +53,27 @@ export class AuthService {
       if (this.authSession) {
         // Fetch user info from GitHub API using the session token
         await this.updateAuthState();
-        console.log(
-          "Restored authentication for user:",
-          this.authState.user?.login
-        );
       } else {
         this.authState = { isAuthenticated: false, dbProviderType: "agentdb" };
       }
     } catch (error) {
-      console.log("No existing auth session found");
       this.authState = { isAuthenticated: false, dbProviderType: "agentdb" };
     }
   }
 
   private async updateAuthState(): Promise<void> {
     if (!this.authSession) {
-      console.log("❌ No auth session available");
       this.authState = { isAuthenticated: false, dbProviderType: "agentdb" };
       return;
     }
 
     try {
-      console.log("🔍 Fetching user info from GitHub API...");
       // Use the VSCode session token to get user info from GitHub
       const response = await axios.get("https://api.github.com/user", {
         headers: {
           Authorization: `Bearer ${this.authSession.accessToken}`,
           Accept: "application/vnd.github.v3+json",
         },
-      });
-
-      console.log("📋 GitHub API response:", {
-        id: response.data.id,
-        login: response.data.login,
-        name: response.data.name,
-        email: response.data.email,
       });
 
       const user: GitHubUser = {
@@ -103,10 +89,7 @@ export class AuthService {
         token: this.authSession.accessToken,
         dbProviderType: "agentdb",
       };
-
-      console.log("✅ Auth state updated successfully");
     } catch (error) {
-      console.error("❌ Failed to fetch user info:", error);
       this.authState = { isAuthenticated: false, dbProviderType: "agentdb" };
       this.authSession = undefined;
     }
@@ -114,7 +97,6 @@ export class AuthService {
 
   public async authenticate(): Promise<boolean> {
     try {
-      console.log("🔐 Starting VSCode GitHub authentication...");
       vscode.window.showInformationMessage("Starting GitHub authentication...");
 
       this.authSession = await vscode.authentication.getSession(
@@ -124,26 +106,12 @@ export class AuthService {
       );
 
       if (this.authSession) {
-        console.log("✅ Got VSCode auth session:", {
-          id: this.authSession.id,
-          account: this.authSession.account.label,
-          scopes: this.authSession.scopes,
-        });
-
         vscode.window.showInformationMessage(
           `Got auth session for: ${this.authSession.account.label}`
         );
 
         await this.updateAuthState();
         if (this.authState.isAuthenticated) {
-          console.log("🎉 Authentication successful! User info:", {
-            login: this.authState.user?.login,
-            name: this.authState.user?.name,
-            email: this.authState.user?.email,
-            id: this.authState.user?.id,
-            tokenLength: this.authState.token?.length,
-          });
-
           // Show detailed success message
           vscode.window.showInformationMessage(
             `✅ Successfully authenticated as ${
@@ -154,9 +122,7 @@ export class AuthService {
           return true;
         }
       }
-      console.log(
-        "❌ Authentication failed - no session or auth state not updated"
-      );
+
       vscode.window.showErrorMessage(
         "Authentication failed - no session created"
       );
@@ -218,10 +184,7 @@ export class AuthService {
   // Compatibility method for the URI handler (not needed for VSCode auth but kept for interface compatibility)
   public async handleAuthCallback(uri: vscode.Uri): Promise<void> {
     // This method is not needed for VSCode's built-in auth but kept for compatibility
-    console.log(
-      "handleAuthCallback called but not needed for VSCode auth:",
-      uri.toString()
-    );
+    return;
   }
 
   // Debug method to show current auth state
@@ -233,10 +196,8 @@ export class AuthService {
           state.user.name || state.user.login
         } ` + `(ID: ${state.user.id}, Email: ${state.user.email || "N/A"})`
       );
-      console.log("Current auth state:", state);
     } else {
       vscode.window.showWarningMessage("❌ Not currently authenticated");
-      console.log("Not authenticated");
     }
   }
 }
