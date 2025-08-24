@@ -24,17 +24,10 @@ let proxyService: ProxyService;
 let activeDbName: string | undefined;
 let activeTemplateName: string | undefined;
 
-const hasSeenWelcomeMessageKey = "hasSeenWelcomeMessage";
-const databaseProvisionedKey = "databaseProvisionedReal4";
+const hasSeenWelcomeMessageKey = "hasSeenWelcomeMessage2";
+const databaseProvisionedKey = "databaseProvisionedReal6";
 
 export async function activate(context: vscode.ExtensionContext) {
-  // Initialize services
-  authService = AuthService.getInstance(context);
-  proxyService = ProxyService.getInstance(authService);
-
-  // Initialize authentication
-  await authService.initialize();
-
   const provider = new ChatratViewProvider(context.extensionUri, context);
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(
@@ -42,6 +35,16 @@ export async function activate(context: vscode.ExtensionContext) {
       provider
     )
   );
+  const savedMcpUrl = context.globalState.get<string>("chatrat.mcpUrl", "");
+  if (savedMcpUrl) provider.updateMcpUrl(savedMcpUrl);
+
+  // Initialize services
+  authService = AuthService.getInstance(context);
+  proxyService = ProxyService.getInstance(authService);
+
+  // Initialize authentication
+  await authService.initialize();
+
   // Set up file save event handler
   const fileWatcher = vscode.workspace.onDidSaveTextDocument(
     async (document) => {
@@ -89,7 +92,6 @@ export async function activate(context: vscode.ExtensionContext) {
     }
   );
 
-
   const focusWatcher = vscode.window.onDidChangeActiveTextEditor(
     async (editor) => {
       if (!editor) return;
@@ -127,7 +129,6 @@ export async function activate(context: vscode.ExtensionContext) {
       debugLog("Full path: " + editor.document.uri.fsPath);
     }
   );
-  
 
   // Register commands
   const sidebarCommand = vscode.commands.registerCommand(
@@ -143,8 +144,46 @@ export async function activate(context: vscode.ExtensionContext) {
   const captureCommand = vscode.commands.registerCommand(
     "chatrat.captureAndSend",
     async () => {
+      // Check if user has previously consented
+      const hasConsented = context.globalState.get("chatrat.hasConsented");
+
+      if (!hasConsented) {
+        const consent = await vscode.window.showInformationMessage(
+          `Chatrat will index the following:\n\n` +
+            `• All source code files in your workspace\n` +
+            `• Excluding: node_modules, .git, binary files, etc.\n` +
+            `• Files are stored securely\n\n` +
+            `We'll create an MCP server so you can grab your code context live from any chatbot (Claude, ChatGPT, etc.). Continue?`,
+          {
+            modal: true,
+            detail:
+              'You\'ll get an MCP url after you index. You can delete indexed data anytime using "Clear Database" command.',
+          },
+          "Index Repository",
+          "View Settings First",
+          "Cancel"
+        );
+
+        if (consent === "View Settings First") {
+          await vscode.commands.executeCommand(
+            "workbench.action.openSettings",
+            "chatrat"
+          );
+          return;
+        } else if (consent !== "Index Repository") {
+          return;
+        }
+
+        // Save consent
+        context.globalState.update("chatrat.hasConsented", true);
+      }
+
+      // Now check authentication
       if (await ensureAuthenticated()) {
-        await captureAndSendRepository(context);
+        provider.updateAuthState(true);
+        updateStatusBar();
+        await captureAndSendRepository(context, provider);
+        updateStatusBar();
       }
     }
   );
@@ -153,6 +192,8 @@ export async function activate(context: vscode.ExtensionContext) {
     "chatrat.listStoredRepositories",
     async () => {
       if (await ensureAuthenticated()) {
+        provider.updateAuthState(true);
+        updateStatusBar();
         await listStoredRepositories(context);
       }
     }
@@ -162,7 +203,11 @@ export async function activate(context: vscode.ExtensionContext) {
     "chatrat.clearDatabase",
     async () => {
       if (await ensureAuthenticated()) {
+        provider.updateAuthState(true);
+        updateStatusBar();
         await clearDatabase(context);
+        provider.updateIndexState(false);
+        updateStatusBar();
       }
     }
   );
@@ -171,7 +216,9 @@ export async function activate(context: vscode.ExtensionContext) {
     "chatrat.getMcpUrl",
     async () => {
       if (await ensureAuthenticated()) {
-        await getAndStoreMcpUrl(context);
+        provider.updateAuthState(true);
+        updateStatusBar();
+        await getAndStoreMcpUrl(context, provider);
       }
     }
   );
@@ -179,7 +226,11 @@ export async function activate(context: vscode.ExtensionContext) {
   const authCommand = vscode.commands.registerCommand(
     "chatrat.authenticate",
     async () => {
-      await authService.authenticate();
+      const ok = await authService.authenticate();
+      if (ok) {
+        provider.updateAuthState(true);
+        updateStatusBar();
+      }
     }
   );
 
@@ -187,6 +238,9 @@ export async function activate(context: vscode.ExtensionContext) {
     "chatrat.logout",
     async () => {
       await authService.logout();
+      provider.updateAuthState(false);
+      provider.updateIndexState(false);
+      updateStatusBar();
     }
   );
 
@@ -203,15 +257,67 @@ export async function activate(context: vscode.ExtensionContext) {
   );
 
   // status bar
+  // In activate function, update status bar based on state
+  function updateStatusBar() {
+    const isAuthenticated = context.globalState.get(
+      "chatrat.isAuthenticated",
+      false
+    );
+    const hasIndexedRepo = context.globalState.get(
+      "chatrat.hasIndexedRepo",
+      false
+    );
+
+    if (!isAuthenticated) {
+      statusBarItem.text = "💬🐀 (Not authenticated)";
+      statusBarItem.backgroundColor = new vscode.ThemeColor(
+        "statusBarItem.warningBackground"
+      );
+    } else if (!hasIndexedRepo) {
+      statusBarItem.text = "💬🐀 (Not indexed)";
+      statusBarItem.backgroundColor = undefined;
+    } else {
+      statusBarItem.text = "💬🐀✅";
+      statusBarItem.backgroundColor = undefined;
+    }
+  }
   const statusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right,
     100
   );
-  statusBarItem.text = "💬🐀😹";
+  updateStatusBar();
   statusBarItem.tooltip = "Chatrat";
   statusBarItem.command = "chatrat.showSidebar";
   statusBarItem.show();
   context.subscriptions.push(statusBarItem);
+
+  provider.updateAuthState(authService.isAuthenticated());
+  updateStatusBar();
+
+  const hasSeenWelcome = context.globalState.get("chatrat.hasSeenWelcome");
+
+  if (!hasSeenWelcome) {
+    // Show welcome message
+    const choice = await vscode.window.showInformationMessage(
+      "👋 Welcome to Chatrat! This extension indexes your code and exposes via MCP so that you can grab your code context live from any chatbot (Claude, ChatGPT, etc.)",
+      "Index Now",
+      "Learn More"
+    );
+
+    if (choice === "Index Now") {
+      // Open the sidebar
+      vscode.commands.executeCommand(
+        "workbench.view.extension.chatrat-container"
+      );
+    } else if (choice === "Learn More") {
+      // Open documentation or the sidebar
+      vscode.commands.executeCommand(
+        "workbench.view.extension.chatrat-container"
+      );
+    }
+
+    context.globalState.update("chatrat.hasSeenWelcome", true);
+  }
 
   // Check server health
   const serverHealthy = await proxyService.checkServerHealth();
@@ -248,7 +354,7 @@ export async function activate(context: vscode.ExtensionContext) {
           )
           .then((selection) => {
             if (selection === "View Progress") {
-              captureAndSendRepository(context);
+              captureAndSendRepository(context, provider);
             }
           });
       }, 3000);
@@ -321,9 +427,16 @@ async function ensureDatabase(context: vscode.ExtensionContext): Promise<void> {
   }
 }
 
-async function getAndStoreMcpUrl(context: vscode.ExtensionContext) {
+async function getAndStoreMcpUrl(
+  context: vscode.ExtensionContext,
+  provider: ChatratViewProvider,
+  silent: boolean = false
+) {
   try {
-    await createAndStoreMcpSlug(context);
+    const mcpUrl = await createAndStoreMcpSlug(context, silent);
+    await context.globalState.update("chatrat.mcpUrl", mcpUrl);
+    provider.updateMcpUrl(mcpUrl);
+    return mcpUrl;
   } catch (err: any) {
     vscode.window.showErrorMessage(
       `Failed to get MCP URL: ${err.message || err}`
@@ -331,22 +444,26 @@ async function getAndStoreMcpUrl(context: vscode.ExtensionContext) {
   }
 }
 
-async function createAndStoreMcpSlug(context: vscode.ExtensionContext) {
+async function createAndStoreMcpSlug(
+  context: vscode.ExtensionContext,
+  silent: boolean = false
+) {
   try {
     await ensureDatabase(context);
 
     const slugResponse: McpSlugResult = await proxyService.createMcpSlug();
 
-    vscode.window
-      .showInformationMessage(
-        `MCP URL created and stored: ${slugResponse.shortUrl}`,
-        "Copy to Clipboard"
-      )
-      .then((selection) => {
-        if (selection === "Copy to Clipboard") {
-          vscode.env.clipboard.writeText(slugResponse.shortUrl);
-        }
-      });
+    if (!silent) {
+      vscode.window
+        .showInformationMessage(
+          `MCP URL created: ${slugResponse.shortUrl}`,
+          "Copy"
+        )
+        .then((selection) => {
+          if (selection === "Copy")
+            vscode.env.clipboard.writeText(slugResponse.shortUrl);
+        });
+    }
 
     debugLog(`New MCP Slug: ${slugResponse.slug}`);
     debugLog(`New MCP URL: ${slugResponse.shortUrl}`);
@@ -357,7 +474,10 @@ async function createAndStoreMcpSlug(context: vscode.ExtensionContext) {
   }
 }
 
-async function captureAndSendRepository(context: vscode.ExtensionContext) {
+async function captureAndSendRepository(
+  context: vscode.ExtensionContext,
+  provider: ChatratViewProvider
+) {
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
 
   if (!workspaceFolder) {
@@ -426,18 +546,28 @@ async function captureAndSendRepository(context: vscode.ExtensionContext) {
           files
         );
 
+        const newUrl = await getAndStoreMcpUrl(
+          context,
+          provider,
+          /*silent*/ true
+        );
+        provider.updateIndexState(true);
         progress.report({ message: "Complete!", increment: 100 });
 
         vscode.window
           .showInformationMessage(
-            `Successfully stored ${files.length} files in Chatrat. ${
+            `Successfully stored ${files.length} files in AgentDB. ${
               errors.length > 0 ? `(${errors.length} files skipped)` : ""
             }`,
-            "View Details",
-            "Query Data"
+            "Copy MCP URL",
+            "View Details"
           )
           .then((selection) => {
-            if (selection === "View Details") {
+            if (selection === "Copy MCP URL") {
+              if (newUrl) {
+                vscode.env.clipboard.writeText(newUrl);
+              }
+            } else if (selection === "View Details") {
               debugLog(`Repository: ${repositoryName}`);
               debugLog(`Files stored: ${files.length}`);
               debugLog(
@@ -513,7 +643,7 @@ async function reindexRepository(
     // Upsert repository record
     debugLog("\n--- Upserting Repository ---");
     while (true) {
-      await sleep(1000);
+      await sleep(5000);
 
       const result = await dataTransfer.upsertRepository(proxyService, {
         id: repoId,
