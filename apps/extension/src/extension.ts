@@ -25,7 +25,7 @@ let proxyService: ProxyService;
 let activeDbName: string | undefined;
 let activeTemplateName: string | undefined;
 
-const databaseProvisionedKey = "databaseProvisionedReal2";
+const databaseProvisionedKey = "databaseProvisionedReal3";
 
 export async function activate(context: vscode.ExtensionContext) {
   // Initialize services
@@ -383,6 +383,8 @@ async function storeInAgentDB(
   workspacePath: string,
   files: FileData[]
 ) {
+
+  const startTime = Date.now();
   try {
     const repoId = getRepositoryKey(repositoryName, workspacePath);
     debugLog(`Repository ID: ${repoId}`);
@@ -394,7 +396,7 @@ async function storeInAgentDB(
     // Upsert repository record
     debugLog("\n--- Upserting Repository ---");
     while (true) {
-      await sleep(10000);
+      await sleep(1000);
 
       const result = await proxyService.executeQuery([
         {
@@ -434,19 +436,23 @@ async function storeInAgentDB(
 
     // Insert files in batches
     debugLog("\n--- Inserting New Files ---");
-    const batchSize = 10;
+    const batchSize = 20;
     let successCount = 0;
     let errorCount = 0;
 
+    // Create all batches
+    const batches: FileData[][] = [];
     for (let i = 0; i < files.length; i += batchSize) {
-      const batch = files.slice(i, i + batchSize);
-      debugLog(
-        `Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(
-          files.length / batchSize
-        )}`
-      );
+      batches.push(files.slice(i, i + batchSize));
+    }
 
-      try {
+    debugLog(`Processing ${batches.length} batches in parallel`);
+
+    // Process all batches in parallel
+    const results = await Promise.allSettled(
+      batches.map(async (batch, index) => {
+        debugLog(`Starting batch ${index + 1}/${batches.length}`);
+
         await withRetries(async () => {
           await proxyService.executeQuery(
             batch.map((file) => ({
@@ -456,20 +462,26 @@ async function storeInAgentDB(
             }))
           );
         });
+
+        return batch;
+      })
+    );
+
+    // Count results and log errors
+    results.forEach((result, index) => {
+      if (result.status === 'fulfilled') {
         successCount++;
-      } catch (error: any) {
+        debugLog(`  ✅ Batch ${index + 1} completed successfully`);
+      } else {
         errorCount++;
+        const batch = batches[index];
         debugLog(
           `  ❌ Error: Failed to insert batch with files ${batch
             .map((f) => f.path)
-            .join(", ")}- ${error.message}`
+            .join(", ")} - ${result.reason?.message || result.reason}`
         );
       }
-
-      if (i + batchSize < files.length) {
-        await new Promise((resolve) => setTimeout(resolve, 100));
-      }
-    }
+    });
 
     debugLog(`\n--- Summary ---`);
     debugLog(`Successfully inserted: ${successCount} files`);
@@ -486,6 +498,8 @@ async function storeInAgentDB(
     debugLog(`Stack: ${error.stack || "No stack trace"}`);
     throw error;
   }
+  const endTime = Date.now();
+  debugLog(`Total time: ${(endTime - startTime)/1000}s`);
 }
 
 async function listStoredRepositories(context: vscode.ExtensionContext) {
