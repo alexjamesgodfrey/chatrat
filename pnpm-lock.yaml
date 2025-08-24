@@ -39,8 +39,8 @@ importers:
   apps/server:
     dependencies:
       '@agentdb/sdk':
-        specifier: ^1.1.8
-        version: 1.1.8
+        specifier: ^1.1.12
+        version: 1.1.12
       '@upstash/redis':
         specifier: ^1.24.5
         version: 1.35.3
@@ -131,6 +131,10 @@ importers:
         version: 5.9.2
 
 packages:
+
+  '@agentdb/sdk@1.1.12':
+    resolution: {integrity: sha512-ZfmCIADWlyVx9a+x1WH0pTUjHTitaGGfCUbjoYG6MludvJR1FUMXym2rls4Ba4BU0Kr3btMJIjsVMVF/2KSVUw==}
+    engines: {node: '>=18.0.0'}
 
   '@agentdb/sdk@1.1.8':
     resolution: {integrity: sha512-iOStczOXbOQ5RfZM+Pl6zZ/BfR+P4gmcyisVzJMhyQAOujy3ODzf36UV11z6lDhMdMpLuUXiRHEoUX06ITNIFw==}
@@ -2362,6 +2366,8 @@ packages:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
 
 snapshots:
+
+  '@agentdb/sdk@1.1.12': {}
 
   '@agentdb/sdk@1.1.8': {}
 
