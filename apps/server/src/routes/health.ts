@@ -1,14 +1,6 @@
 import { Router } from "express";
-import { DatabaseService } from "@agentdb/sdk";
 
 const router = Router();
-
-// AgentDB service instance - this will be injected
-let agentDbService: DatabaseService | undefined;
-
-export function setAgentDbService(service: DatabaseService) {
-  agentDbService = service;
-}
 
 // Health check
 router.get("/healthz", (req, res) => {
@@ -16,7 +8,6 @@ router.get("/healthz", (req, res) => {
     status: "ok",
     timestamp: new Date().toISOString(),
     services: {
-      agentdb: !!agentDbService,
       github_oauth: !!(
         process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET
       ),

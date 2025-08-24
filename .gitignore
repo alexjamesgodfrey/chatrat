@@ -1,7 +1,7 @@
 node_modules
-
-# all .turbo
-.turbo
-
-#all .DS_Store
+.turbo/
+**/.turbo/
+**/turbo-build.log
+turbo-build.log
 .DS_Store
+**/.DS_Store

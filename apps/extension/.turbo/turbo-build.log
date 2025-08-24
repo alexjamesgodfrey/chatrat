@@ -1,6 +1,6 @@
 
 
-> chatrat@0.0.1 build /Users/elijahmelton/repos/chatrat/apps/extension
+> chatrat@0.0.1 build /Users/alexgodfrey/Developer/repo-mcp/apps/extension
 > npm run esbuild-base -- --sourcemap
 
 [1mnpm[22m [33mwarn[39m [94mUnknown env config "verify-deps-before-run". This will stop working in the next major version of npm.[39m
@@ -10,8 +10,8 @@
 > esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node --sourcemap
 
 [1G[0K
-  [37mout/[0m[1mextension.js[0m      [36m465.0kb[0m
-  [37mout/[0m[1mextension.js.map[0m  [36m809.8kb[0m
+  [37mout/[0m[1mextension.js[0m      [36m463.1kb[0m
+  [37mout/[0m[1mextension.js.map[0m  [36m806.3kb[0m
 
-⚡ [32mDone in 17ms[0m
+⚡ [32mDone in 15ms[0m
 [1G[0K⠙[1G[0K

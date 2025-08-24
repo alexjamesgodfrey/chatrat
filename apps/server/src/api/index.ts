@@ -1,5 +1,4 @@
 import { DatabaseService } from "@agentdb/sdk";
-import checkOrSeedRouter from "../routes/checkOrSeed";
 import { Redis } from "@upstash/redis";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -9,12 +8,9 @@ import path from "path";
 
 // Import route modules
 import executeSqlRouter from "../routes/executeSql";
-import healthRouter, {
-  setAgentDbService as setAgentDbServiceHealth,
-} from "../routes/health";
-import mcpSlugRouter, {
-  setAgentDbService as setAgentDbServiceMcp,
-} from "../routes/createMcpSlug";
+import mcpSlugRouter from "../routes/createMcpSlug";
+import checkOrSeedRouter from "../routes/checkOrSeed";
+import healthRouter from "../routes/health";
 
 // Load environment variables
 dotenv.config();
@@ -134,12 +130,6 @@ function initializeAgentDB() {
 
   agentDbService = new DatabaseService(baseUrl, apiKey);
   console.log("AgentDB service initialized");
-
-  // Inject the service into route modules
-  if (agentDbService) {
-    setAgentDbServiceHealth(agentDbService);
-    setAgentDbServiceMcp(agentDbService);
-  }
 }
 
 // Initialize on startup
