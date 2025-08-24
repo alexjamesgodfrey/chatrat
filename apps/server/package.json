@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node dist/api/index.js",
-    "dev": "tsx watch src/api/index.ts",
+    "dev": "tsx watch api/index.ts",
     "build": "tsc"
   },
   "keywords": [

@@ -1,10 +1,13 @@
 {
-  "version": 2,
-  "outputDirectory": "dist",
-  "routes": [
+  "rewrites": [
     {
-      "src": "/(.*)",
-      "dest": "src/api/index.ts"
+      "source": "/(.*)",
+      "destination": "/api"
     }
-  ]
+  ],
+  "functions": {
+    "api/index.ts": {
+      "maxDuration": 60
+    }
+  }
 }
