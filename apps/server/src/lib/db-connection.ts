@@ -48,12 +48,35 @@ class AgentDBDatabase implements DatabaseProvider {
     await this.connection.execute(statements);
   }
 
+  async createMcpSlug(): Promise<string> {
+    if (!this.connection) {
+      throw new Error("AgentDB connection not initialized");
+    }
+    const response = await this.client?.createMcpSlug({
+      key: this.apiKey,
+      token: this.token,
+      dbType: "sqlite",
+      dbName: this.dbName,
+      // eli add template
+      // template: ,
+    });
+
+    if (!response) {
+      throw new Error("Failed to create MCP slug");
+    }
+
+    return response.slug;
+  }
+
   async seedDatabaseIfNecessary(): Promise<void> {
     throw new Error("Method not implemented.");
   }
 }
 
 class PostgresDatabase implements DatabaseProvider {
+  createMcpSlug(): Promise<string> {
+    throw new Error("Method not implemented.");
+  }
   seedDatabaseIfNecessary(): Promise<void> {
     throw new Error("Method not implemented.");
   }

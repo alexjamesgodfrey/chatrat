@@ -101,48 +101,12 @@ export class ProxyService {
     }
   }
 
-  public async naturalLanguageToSql(
-    query: string,
-    context: any = null,
-    templateName: string = "repo-context-template"
-  ): Promise<NaturalLanguageResult> {
+  public async checkOrSeedDatabase(): Promise<void> {
     try {
-      const response = await this.httpClient.post("/api/agentdb/nl-to-sql", {
-        query,
-        context,
-        templateName,
-      });
+      const response = await this.httpClient.post("/api/check-or-seed");
       return response.data;
     } catch (error) {
-      console.error("Natural language to SQL error:", error);
-      throw new Error(
-        `Failed to process natural language query: ${this.getErrorMessage(
-          error
-        )}`
-      );
-    }
-  }
-
-  public async copyDatabase(
-    sourceDbName: string,
-    sourceDbType: string = "sqlite",
-    targetDbName?: string
-  ): Promise<any> {
-    try {
-      const response = await this.httpClient.post(
-        "/api/agentdb/copy-database",
-        {
-          sourceDbName,
-          sourceDbType,
-          targetDbName, // Add this
-        }
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Copy database error:", error);
-      throw new Error(
-        `Failed to copy database: ${this.getErrorMessage(error)}`
-      );
+      console.error("Check or seed database error:", error);
     }
   }
 
@@ -151,7 +115,7 @@ export class ProxyService {
       const response = await this.httpClient.post(
         "/api/agentdb/create-mcp-slug"
       );
-      return response.data;
+      return response.data.slug;
     } catch (error) {
       console.error("Create MCP slug error:", error);
       throw new Error(

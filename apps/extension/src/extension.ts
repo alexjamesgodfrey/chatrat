@@ -33,7 +33,7 @@ export async function activate(context: vscode.ExtensionContext) {
     "chatrat.captureAndSend",
     async () => {
       if (await ensureAuthenticated()) {
-        await captureAndSendRepository();
+        await captureAndSendRepository(context);
       }
     }
   );
@@ -42,7 +42,7 @@ export async function activate(context: vscode.ExtensionContext) {
     "chatrat.listStoredRepositories",
     async () => {
       if (await ensureAuthenticated()) {
-        await listStoredRepositories();
+        await listStoredRepositories(context);
       }
     }
   );
@@ -51,7 +51,7 @@ export async function activate(context: vscode.ExtensionContext) {
     "chatrat.clearDatabase",
     async () => {
       if (await ensureAuthenticated()) {
-        await clearDatabase();
+        await clearDatabase(context);
       }
     }
   );
@@ -123,7 +123,7 @@ export async function activate(context: vscode.ExtensionContext) {
           )
           .then((selection) => {
             if (selection === "View Progress") {
-              captureAndSendRepository();
+              captureAndSendRepository(context);
             }
           });
       }, 3000);
@@ -163,88 +163,37 @@ function getRepositoryKey(
   return `${repositoryName}:${hash}`;
 }
 
-async function applyTemplate(targetDbName: string) {
+async function createDatabaseWithTemplate(context: vscode.ExtensionContext) {
   try {
     // The copyDatabase function should copy the template to a new database with the user's name
-    const response = await proxyService.copyDatabase(
-      "alex-boiler",
-      "sqlite",
-      targetDbName
-    );
+    const response = await proxyService.checkOrSeedDatabase();
 
-    const outputChannel =
-      vscode.window.createOutputChannel("Chatrat - Template");
+    const outputChannel = vscode.window.createOutputChannel(
+      "Chatrat - Create Database With Template"
+    );
     outputChannel.show(true);
     outputChannel.appendLine(
-      `Template application response: ${JSON.stringify(response)}`
+      `Check or seed database response: ${JSON.stringify(response)}`
     );
-    outputChannel.appendLine(
-      `Database "${targetDbName}" created from template successfully ✅`
-    );
+    outputChannel.appendLine(`Database provisioned successfully ✅`);
+
+    // save to vscode.workspace that we provisioned the database
+    context.globalState.update("databaseProvisioned", true);
   } catch (error) {
     console.error("Template application error:", error);
     throw error;
   }
 }
 
-async function ensureDatabase(): Promise<void> {
+async function ensureDatabase(context: vscode.ExtensionContext): Promise<void> {
   try {
-    // Get the user's GitHub username
-    const user = authService.getUser();
-    if (!user) {
-      throw new Error("User information not available");
+    if (context.globalState.get("databaseProvisioned")) {
+      return;
     }
 
-    // Calculate expected database name
-    const expectedDbName = `repo-context-${user.login
-      .replace(/[^a-zA-Z0-9_-]/g, "")
-      .slice(0, 64)}`.slice(0, 32);
+    await createDatabaseWithTemplate(context);
 
-    // List existing databases to check if user's database exists
-    try {
-      // TODO: CHECK IF DB EXISTS
-
-      if (!dbExists) {
-        // Database doesn't exist, create it from template
-        console.log(
-          `Database ${expectedDbName} not found, creating from template...`
-        );
-
-        const outputChannel =
-          vscode.window.createOutputChannel("Chatrat - Database");
-        outputChannel.appendLine(`Creating new database: ${expectedDbName}`);
-        outputChannel.appendLine("Applying template to create schema...");
-        outputChannel.show();
-
-        // Apply template which will create the database
-        await applyTemplate(expectedDbName);
-        activeTemplateName = "alex-boiler";
-
-        outputChannel.appendLine(
-          "✅ Database created from template successfully!"
-        );
-      } else {
-        console.log(`Database ${expectedDbName} already exists`);
-      }
-    } catch (listError) {
-      // If listing fails, try to create the database anyway
-      console.log(
-        "Could not list databases, attempting to create from template..."
-      );
-      await applyTemplate(expectedDbName);
-      activeTemplateName = "alex-boiler";
-    }
-
-    activeDbName = expectedDbName;
-
-    const outputChannel =
-      vscode.window.createOutputChannel("Chatrat - Database");
-    outputChannel.appendLine(`Connected to database: ${activeDbName}`);
-    if (activeTemplateName) {
-      outputChannel.appendLine(`Template applied: ${activeTemplateName}`);
-    }
-
-    console.log(`Database ready: ${activeDbName}`);
+    console.log(`Database ready`);
   } catch (error) {
     console.error("Database connection error:", error);
     throw new Error(`Failed to connect to database: ${error}`);
@@ -263,7 +212,7 @@ async function getAndStoreMcpUrl(context: vscode.ExtensionContext) {
 
 async function createAndStoreMcpSlug(context: vscode.ExtensionContext) {
   try {
-    await ensureDatabase();
+    await ensureDatabase(context);
 
     const slugResponse = await proxyService.createMcpSlug();
 
@@ -293,7 +242,7 @@ async function createAndStoreMcpSlug(context: vscode.ExtensionContext) {
   }
 }
 
-async function captureAndSendRepository() {
+async function captureAndSendRepository(context: vscode.ExtensionContext) {
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
 
   if (!workspaceFolder) {
@@ -317,7 +266,7 @@ async function captureAndSendRepository() {
           message: "Provisioning database. This can take a while...",
           increment: 0,
         });
-        await ensureDatabase();
+        await ensureDatabase(context);
 
         progress.report({ message: "Scanning files...", increment: 10 });
 
@@ -519,9 +468,9 @@ async function storeInAgentDB(
   }
 }
 
-async function listStoredRepositories() {
+async function listStoredRepositories(context: vscode.ExtensionContext) {
   try {
-    await ensureDatabase();
+    await ensureDatabase(context);
 
     const result = await proxyService.executeQuery([
       {
@@ -559,7 +508,7 @@ async function listStoredRepositories() {
   }
 }
 
-async function clearDatabase() {
+async function clearDatabase(context: vscode.ExtensionContext) {
   const confirm = await vscode.window.showWarningMessage(
     "Are you sure you want to clear all repository data from AgentDB?",
     { modal: true },
@@ -569,7 +518,7 @@ async function clearDatabase() {
   if (confirm !== "Yes, Clear All") return;
 
   try {
-    await ensureDatabase();
+    await ensureDatabase(context);
 
     await proxyService.executeQuery([
       {

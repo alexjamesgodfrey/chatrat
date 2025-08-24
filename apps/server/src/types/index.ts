@@ -6,6 +6,7 @@ export const dbProviderType = ["postgres", "agentdb"] as const;
 export interface DatabaseProvider {
   executeSql(statements: SqlStatement[]): Promise<void>;
   seedDatabaseIfNecessary(): Promise<void>;
+  createMcpSlug(): Promise<string>;
 }
 
 const GitHubUser = z.object({

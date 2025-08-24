@@ -1,4 +1,5 @@
 import { DatabaseService } from "@agentdb/sdk";
+import checkOrSeedRouter from "../routes/checkOrSeed";
 import { Redis } from "@upstash/redis";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -13,7 +14,7 @@ import healthRouter, {
 } from "../routes/health";
 import mcpSlugRouter, {
   setAgentDbService as setAgentDbServiceMcp,
-} from "../routes/mcpSlug";
+} from "../routes/createMcpSlug";
 
 // Load environment variables
 dotenv.config();
@@ -202,6 +203,7 @@ initializeSession();
 app.use(executeSqlRouter);
 app.use(healthRouter);
 app.use(mcpSlugRouter);
+app.use(checkOrSeedRouter);
 
 // Error handling middleware
 app.use(
