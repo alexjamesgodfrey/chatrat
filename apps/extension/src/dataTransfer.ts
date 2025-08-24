@@ -134,3 +134,58 @@ export async function clearAllRepositoryData(
     },
   ]);
 }
+
+export async function upsertFocusedFile(
+  proxyService: ProxyService,
+  repoId: string,
+  filePath: string
+): Promise<void> {
+  await proxyService.executeQuery([
+    {
+      sql: `INSERT INTO open_files (repository_id, file_path, is_focused, opened_at)
+                VALUES (?, ?, 1, CURRENT_TIMESTAMP)
+                ON CONFLICT(repository_id, file_path) DO UPDATE SET
+                is_focused = 1,
+                opened_at = CURRENT_TIMESTAMP`,
+      params: [repoId, filePath],
+    },
+  ]);
+}
+
+export async function upsertFileDiagnostics(
+    proxyService: ProxyService,
+    repoId: string,
+    filePath: string,
+    errorsJson: string
+  ): Promise<void> {
+    console.log(`I want to upsert the following diagnostics for ${repoId} and ${filePath}: ${errorsJson}`);
+    await proxyService.executeQuery([
+      {
+        sql: `
+        INSERT INTO open_files (repository_id, file_path, diagnostics)
+                VALUES (?, ?, ?)
+                ON CONFLICT(repository_id, file_path) DO UPDATE SET
+                diagnostics = excluded.diagnostics
+        `,
+        params: [repoId, filePath, errorsJson],
+      },
+    ]);
+  }
+
+  export async function deleteOpenFileBecauseItClosed(
+    proxyService: ProxyService,
+    repoId: string,
+    filePath: string
+  ): Promise<void> {
+    const result = await proxyService.executeQuery([
+      {
+        sql: `
+        DELETE FROM open_files
+        WHERE repository_id = ? AND file_path = ?
+        `,
+        params: [repoId, filePath],
+      },
+    ]);
+
+    console.log("result from deleting:" + JSON.stringify(result));
+  }
