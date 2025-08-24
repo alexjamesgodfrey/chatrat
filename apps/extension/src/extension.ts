@@ -5,9 +5,11 @@ import * as path from "path";
 import * as vscode from "vscode";
 import { AuthService } from "./authService";
 import { ChatratViewProvider } from "./chatratViewProvider";
-import { ProxyService } from "./proxyService";
+import { McpSlugResult, ProxyService } from "./proxyService";
 
-const theOneAndOnlyOutputChannel = vscode.window.createOutputChannel("Chatrat");
+const OUTPUT_CHANNEL_NAME = "Chatrat";
+const theOneAndOnlyOutputChannel =
+  vscode.window.createOutputChannel(OUTPUT_CHANNEL_NAME);
 theOneAndOnlyOutputChannel.show(true);
 
 function debugLog(...args: any[]) {
@@ -43,6 +45,56 @@ export async function activate(context: vscode.ExtensionContext) {
       ChatratViewProvider.viewType,
       provider
     )
+  );
+  // Set up file save event handler
+  const fileWatcher = vscode.workspace.onDidSaveTextDocument(
+    async (document) => {
+      debugLog("Saved: " + document.fileName);
+      debugLog("Full path: " + document.uri.fsPath);
+
+      if (!context.globalState.get(databaseProvisionedKey)) {
+        return;
+      }
+
+      try {
+        const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+        if (!workspaceFolder) return;
+
+        const repositoryName = path.basename(workspaceFolder.uri.fsPath);
+        const repoId = getRepositoryKey(
+          repositoryName,
+          workspaceFolder.uri.fsPath
+        );
+        const relativePath = path.relative(
+          workspaceFolder.uri.fsPath,
+          document.uri.fsPath
+        );
+        const repoRelativePath = path
+          .join(repositoryName, relativePath)
+          .replace(/\\/g, "/");
+
+        const content = document.getText();
+        const size = Buffer.byteLength(content, "utf8");
+
+        await proxyService.executeQuery([
+          {
+            sql: `INSERT INTO repository_files (repository_id, file_path, content, size, created_at)
+              VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+              ON CONFLICT(repository_id, file_path) DO UPDATE SET
+              content = excluded.content,
+              size = excluded.size,
+              created_at = CURRENT_TIMESTAMP`,
+            params: [repoId, repoRelativePath, content, size],
+          },
+        ]);
+
+        debugLog(`Updated file in database: ${repoRelativePath}`);
+      } catch (error: any) {
+        debugLog(
+          `Failed to update file in database: ${error.message || error}`
+        );
+      }
+    }
   );
 
   // Register commands
@@ -113,7 +165,8 @@ export async function activate(context: vscode.ExtensionContext) {
     clearCommand,
     mcpCommand,
     authCommand,
-    logoutCommand
+    logoutCommand,
+    fileWatcher
   );
 
   // status bar
@@ -157,7 +210,7 @@ export async function activate(context: vscode.ExtensionContext) {
       setTimeout(() => {
         vscode.window
           .showInformationMessage(
-            "Auto-capturing repository context to AgentDB...",
+            "Auto-capturing repository context...",
             "View Progress"
           )
           .then((selection) => {
@@ -202,7 +255,7 @@ function getRepositoryKey(
   return `${repositoryName}:${hash}`;
 }
 
-async function createDatabaseWithTemplate(context: vscode.ExtensionContext) {
+async function seedDatabase(context: vscode.ExtensionContext) {
   try {
     // The copyDatabase function should copy the template to a new database with the user's name
     const response = await proxyService.checkOrSeedDatabase();
@@ -226,7 +279,7 @@ async function ensureDatabase(context: vscode.ExtensionContext): Promise<void> {
     }
 
     debugLog(`Provisioning database...`);
-    await createDatabaseWithTemplate(context);
+    await seedDatabase(context);
 
     debugLog(`Database ready`);
   } catch (error) {
@@ -249,11 +302,7 @@ async function createAndStoreMcpSlug(context: vscode.ExtensionContext) {
   try {
     await ensureDatabase(context);
 
-    const slugResponse = await proxyService.createMcpSlug();
-
-    if (!slugResponse?.shortUrl) {
-      throw new Error("Failed to create MCP slug: no URL returned");
-    }
+    const slugResponse: McpSlugResult = await proxyService.createMcpSlug();
 
     vscode.window
       .showInformationMessage(
@@ -290,7 +339,7 @@ async function captureAndSendRepository(context: vscode.ExtensionContext) {
   vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
-      title: "Capturing repository to AgentDB",
+      title: "Capturing repository",
       cancellable: true,
     },
     async (progress, token) => {
@@ -337,14 +386,18 @@ async function captureAndSendRepository(context: vscode.ExtensionContext) {
           return;
         }
 
-        progress.report({ message: "Storing in AgentDB...", increment: 70 });
-        await storeInAgentDB(repositoryName, workspaceFolder.uri.fsPath, files);
+        progress.report({ message: "Storing files...", increment: 70 });
+        await reindexRepository(
+          repositoryName,
+          workspaceFolder.uri.fsPath,
+          files
+        );
 
         progress.report({ message: "Complete!", increment: 100 });
 
         vscode.window
           .showInformationMessage(
-            `Successfully stored ${files.length} files in AgentDB. ${
+            `Successfully stored ${files.length} files in Chatrat. ${
               errors.length > 0 ? `(${errors.length} files skipped)` : ""
             }`,
             "View Details",
@@ -410,7 +463,7 @@ async function withRetries<T>(
   throw new Error("Max retries exceeded");
 }
 
-async function storeInAgentDB(
+async function reindexRepository(
   repositoryName: string,
   workspacePath: string,
   files: FileData[]
@@ -520,7 +573,7 @@ async function storeInAgentDB(
 
     if (successCount === 0 && files.length > 0) {
       throw new Error(
-        `Failed to store any files. Check "AgentDB Storage Debug" output for details.`
+        `Failed to store any files. Check "${OUTPUT_CHANNEL_NAME}" output for details.`
       );
     }
   } catch (error: any) {
@@ -549,7 +602,7 @@ async function listStoredRepositories(context: vscode.ExtensionContext) {
     const outputChannel = vscode.window.createOutputChannel(
       "Stored Repositories"
     );
-    outputChannel.appendLine("=== Stored Repositories in AgentDB ===\n");
+    outputChannel.appendLine("=== Stored Repositories in Chatrat ===\n");
 
     if (!result?.results?.[0]?.rows?.length) {
       outputChannel.appendLine("No repositories stored yet.");
@@ -575,7 +628,7 @@ async function listStoredRepositories(context: vscode.ExtensionContext) {
 
 async function clearDatabase(context: vscode.ExtensionContext) {
   const confirm = await vscode.window.showWarningMessage(
-    "Are you sure you want to clear all repository data from AgentDB?",
+    "Are you sure you want to clear all repository data from Chatrat?",
     { modal: true },
     "Yes, Clear All",
     "Cancel"
@@ -599,7 +652,7 @@ async function clearDatabase(context: vscode.ExtensionContext) {
     ]);
 
     vscode.window.showInformationMessage(
-      "Successfully cleared all repository data from AgentDB"
+      "Successfully cleared all repository data from Chatrat."
     );
   } catch (error: any) {
     console.error("Clear database error:", error);

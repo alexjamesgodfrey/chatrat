@@ -17,7 +17,8 @@ router.post(
 
     try {
       const slug = await dbProvider.createMcpSlug();
-      return res.json({ slug });
+
+      return res.json({ ...slug });
     } catch (error) {
       return res.status(500).json({ error: "Failed to create MCP slug" });
     }

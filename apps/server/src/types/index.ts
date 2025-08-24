@@ -1,3 +1,4 @@
+import { McpSlugResponse } from "@agentdb/sdk";
 import { SqlResults, SqlStatement } from "@chatrat/types";
 import { Request } from "express";
 import z from "zod";
@@ -6,7 +7,7 @@ export const dbProviderType = ["postgres", "agentdb"] as const;
 export interface DatabaseProvider {
   executeSql(statements: SqlStatement[]): Promise<SqlResults>;
   seedDatabaseIfNecessary(): Promise<void>;
-  createMcpSlug(): Promise<string>;
+  createMcpSlug(): Promise<McpSlugResponse>;
 }
 
 const GitHubUser = z.object({
