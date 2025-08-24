@@ -6,7 +6,7 @@ export const AGENTDB_BASE_URL =
   process.env.AGENTDB_BASE_URL || "https://api.agentdb.com/";
 
 export const AGENTDB_CLIENT_DEBUG =
-  process.env.AGENTDB_CLIENT_DEBUG == "true" || true;
+  process.env.AGENTDB_CLIENT_DEBUG === "true";
 
 export const DEFAULT_AGENTDB_DB_API_KEY =
   process.env.DEFAULT_AGENTDB_DB_API_KEY!;
