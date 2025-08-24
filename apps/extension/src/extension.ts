@@ -6,7 +6,8 @@ import * as vscode from "vscode";
 import { AuthService } from "./authService";
 import { ProxyService } from "./proxyService";
 
-const theOneAndOnlyOutputChannel = vscode.window.createOutputChannel("Chatrat");
+const OUTPUT_CHANNEL_NAME = "Chatrat";
+const theOneAndOnlyOutputChannel = vscode.window.createOutputChannel(OUTPUT_CHANNEL_NAME);
 theOneAndOnlyOutputChannel.show(true);
 
 function debugLog(...args: any[]) {
@@ -125,7 +126,7 @@ export async function activate(context: vscode.ExtensionContext) {
       setTimeout(() => {
         vscode.window
           .showInformationMessage(
-            "Auto-capturing repository context to AgentDB...",
+            "Auto-capturing repository context...",
             "View Progress"
           )
           .then((selection) => {
@@ -170,7 +171,7 @@ function getRepositoryKey(
   return `${repositoryName}:${hash}`;
 }
 
-async function createDatabaseWithTemplate(context: vscode.ExtensionContext) {
+async function seedDatabase(context: vscode.ExtensionContext) {
   try {
     // The copyDatabase function should copy the template to a new database with the user's name
     const response = await proxyService.checkOrSeedDatabase();
@@ -194,7 +195,7 @@ async function ensureDatabase(context: vscode.ExtensionContext): Promise<void> {
     }
 
     debugLog(`Provisioning database...`);
-    await createDatabaseWithTemplate(context);
+    await seedDatabase(context);
 
     debugLog(`Database ready`);
   } catch (error) {
@@ -258,7 +259,7 @@ async function captureAndSendRepository(context: vscode.ExtensionContext) {
   vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
-      title: "Capturing repository to AgentDB",
+      title: "Capturing repository",
       cancellable: true,
     },
     async (progress, token) => {
@@ -305,14 +306,14 @@ async function captureAndSendRepository(context: vscode.ExtensionContext) {
           return;
         }
 
-        progress.report({ message: "Storing in AgentDB...", increment: 70 });
-        await storeInAgentDB(repositoryName, workspaceFolder.uri.fsPath, files);
+        progress.report({ message: "Storing files...", increment: 70 });
+        await reindexRepository(repositoryName, workspaceFolder.uri.fsPath, files);
 
         progress.report({ message: "Complete!", increment: 100 });
 
         vscode.window
           .showInformationMessage(
-            `Successfully stored ${files.length} files in AgentDB. ${
+            `Successfully stored ${files.length} files in Chatrat. ${
               errors.length > 0 ? `(${errors.length} files skipped)` : ""
             }`,
             "View Details",
@@ -378,7 +379,7 @@ async function withRetries<T>(
   throw new Error("Max retries exceeded");
 }
 
-async function storeInAgentDB(
+async function reindexRepository(
   repositoryName: string,
   workspacePath: string,
   files: FileData[]
@@ -489,7 +490,7 @@ async function storeInAgentDB(
 
     if (successCount === 0 && files.length > 0) {
       throw new Error(
-        `Failed to store any files. Check "AgentDB Storage Debug" output for details.`
+        `Failed to store any files. Check "${OUTPUT_CHANNEL_NAME}" output for details.`
       );
     }
   } catch (error: any) {
@@ -518,7 +519,7 @@ async function listStoredRepositories(context: vscode.ExtensionContext) {
     const outputChannel = vscode.window.createOutputChannel(
       "Stored Repositories"
     );
-    outputChannel.appendLine("=== Stored Repositories in AgentDB ===\n");
+    outputChannel.appendLine("=== Stored Repositories in Chatrat ===\n");
 
     if (!result?.results?.[0]?.rows?.length) {
       outputChannel.appendLine("No repositories stored yet.");
@@ -544,7 +545,7 @@ async function listStoredRepositories(context: vscode.ExtensionContext) {
 
 async function clearDatabase(context: vscode.ExtensionContext) {
   const confirm = await vscode.window.showWarningMessage(
-    "Are you sure you want to clear all repository data from AgentDB?",
+    "Are you sure you want to clear all repository data from Chatrat?",
     { modal: true },
     "Yes, Clear All",
     "Cancel"
@@ -568,7 +569,7 @@ async function clearDatabase(context: vscode.ExtensionContext) {
     ]);
 
     vscode.window.showInformationMessage(
-      "Successfully cleared all repository data from AgentDB"
+      "Successfully cleared all repository data from Chatrat."
     );
   } catch (error: any) {
     console.error("Clear database error:", error);
