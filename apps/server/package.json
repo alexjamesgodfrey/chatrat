@@ -18,6 +18,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@chatrat/types": "workspace:*",
     "@agentdb/sdk": "^1.1.12",
     "@types/express": "^4.17.23",
     "@types/express-session": "^1.18.0",
