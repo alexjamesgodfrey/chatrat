@@ -57,6 +57,10 @@ export const requireAuth: RequestHandler = async (req, res: Response, next) => {
       // Populate session with GitHub data
       req.session.githubUser = userResponse.data;
       req.session.githubToken = token;
+      req.session.dbProviderType = req.headers["db-provider-type"] as
+        | "postgres"
+        | "agentdb";
+      req.session.connectionString = req.headers["connection-string"] as string;
 
       // Save session explicitly to ensure it's persisted
       await new Promise<void>((resolve, reject) => {

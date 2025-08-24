@@ -115,8 +115,10 @@ export async function getDatabaseProviderFromAuthenticatedRequest(
   switch (provider) {
     case "agentdb":
       // they use our own connection string
-      if (!req.session.agentDbConnection) {
-        return new AgentDBDatabase(req.session.githubUser.login);
+      if (!req.session.connectionString) {
+        return new AgentDBDatabase(
+          `chatrat-dev-${req.session.githubUser.login}`
+        );
       }
 
       const agentDbValidationResult = validateAgentDbString(

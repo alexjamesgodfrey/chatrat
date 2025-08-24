@@ -17,13 +17,18 @@ export interface AuthState {
   isAuthenticated: boolean;
   user?: GitHubUser;
   token?: string;
+  dbProviderType: string;
+  connectionString?: string;
 }
 
 export class AuthService {
   private static instance: AuthService;
   private context: vscode.ExtensionContext;
   private authSession?: vscode.AuthenticationSession = undefined;
-  private authState: AuthState = { isAuthenticated: false };
+  private authState: AuthState = {
+    isAuthenticated: false,
+    dbProviderType: "agentdb",
+  };
 
   private constructor(context: vscode.ExtensionContext) {
     this.context = context;
@@ -53,18 +58,18 @@ export class AuthService {
           this.authState.user?.login
         );
       } else {
-        this.authState = { isAuthenticated: false };
+        this.authState = { isAuthenticated: false, dbProviderType: "agentdb" };
       }
     } catch (error) {
       console.log("No existing auth session found");
-      this.authState = { isAuthenticated: false };
+      this.authState = { isAuthenticated: false, dbProviderType: "agentdb" };
     }
   }
 
   private async updateAuthState(): Promise<void> {
     if (!this.authSession) {
       console.log("❌ No auth session available");
-      this.authState = { isAuthenticated: false };
+      this.authState = { isAuthenticated: false, dbProviderType: "agentdb" };
       return;
     }
 
@@ -96,12 +101,13 @@ export class AuthService {
         isAuthenticated: true,
         user,
         token: this.authSession.accessToken,
+        dbProviderType: "agentdb",
       };
 
       console.log("✅ Auth state updated successfully");
     } catch (error) {
       console.error("❌ Failed to fetch user info:", error);
-      this.authState = { isAuthenticated: false };
+      this.authState = { isAuthenticated: false, dbProviderType: "agentdb" };
       this.authSession = undefined;
     }
   }
@@ -182,14 +188,14 @@ export class AuthService {
 
       // Clear local state
       this.authSession = undefined;
-      this.authState = { isAuthenticated: false };
+      this.authState = { isAuthenticated: false, dbProviderType: "agentdb" };
 
       vscode.window.showInformationMessage("Successfully logged out locally");
     } catch (error) {
       console.error("Logout error:", error);
       // Still clear local state even if there's an error
       this.authSession = undefined;
-      this.authState = { isAuthenticated: false };
+      this.authState = { isAuthenticated: false, dbProviderType: "agentdb" };
     }
   }
 

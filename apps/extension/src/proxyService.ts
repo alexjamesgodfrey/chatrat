@@ -52,6 +52,10 @@ export class ProxyService {
       if (token) {
         // Send the GitHub token as Bearer token
         config.headers.Authorization = `Bearer ${token}`;
+        config.headers["db-provider-type"] =
+          this.authService.getAuthState().dbProviderType;
+        config.headers["connection-string"] =
+          this.authService.getAuthState().connectionString;
       }
       return config;
     });

@@ -191,7 +191,7 @@ async function ensureDatabase(context: vscode.ExtensionContext): Promise<void> {
       "Chatrat - Ensure Database"
     );
 
-    if (context.globalState.get("databaseProvisioned2")) {
+    if (context.globalState.get("databaseProvisioned5")) {
       outputChannel.appendLine(`Database already provisioned`);
       outputChannel.show();
       return;

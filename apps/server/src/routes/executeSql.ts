@@ -20,6 +20,7 @@ router.post(
       body: { statements },
     } = req as RequestWithProvider;
 
+    console.log("grep statemetns ", statements);
     try {
       await dbProvider.executeSql(statements);
     } catch (error) {

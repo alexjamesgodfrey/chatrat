@@ -13,6 +13,7 @@ const GitHubUser = z.object({
   id: z.number(),
   login: z.string(),
   name: z.string(),
+  email: z.string().nullable(),
 });
 export type GitHubUser = z.infer<typeof GitHubUser>;
 
