@@ -27,6 +27,11 @@ jobs:
           cache: "npm"
           cache-dependency-path: apps/extension/package-lock.json
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.14.0
+
       - name: Install dependencies
         working-directory: .
         run: pnpm i --frozen-lockfile
