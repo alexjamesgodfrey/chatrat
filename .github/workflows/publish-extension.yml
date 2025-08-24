@@ -139,19 +139,39 @@ jobs:
       - name: Check if version already exists in marketplace
         id: check_version
         working-directory: apps/extension
+        continue-on-error: true
         run: |
-          PUBLISHER=$(node -p "require('./package.json').publisher")
-          NAME=$(node -p "require('./package.json').name")
+          PUBLISHER="serviettellc"
+          NAME="chatrat"
           VERSION="${{ steps.version.outputs.version }}"
 
-          # Check if version exists (this will exit with code 1 if version doesn't exist)
-          if vsce show "$PUBLISHER.$NAME@$VERSION" >/dev/null 2>&1; then
-            echo "version_exists=true" >> $GITHUB_OUTPUT
-            echo "Version $VERSION already exists in marketplace"
+          echo "Checking if $PUBLISHER.$NAME@$VERSION exists..."
+
+          # Use set +e to prevent script from exiting on non-zero exit code
+          set +e
+          vsce show "$PUBLISHER.$NAME" --json > extension_info.json 2>/dev/null
+          SHOW_EXIT_CODE=$?
+          set -e
+
+          if [ $SHOW_EXIT_CODE -eq 0 ]; then
+            # Extension exists, check if this specific version exists
+            CURRENT_VERSION=$(node -p "try { require('./extension_info.json').versions[0].version } catch(e) { '' }")
+            
+            if [ "$CURRENT_VERSION" = "$VERSION" ]; then
+              echo "version_exists=true" >> $GITHUB_OUTPUT
+              echo "Version $VERSION already exists in marketplace"
+            else
+              echo "version_exists=false" >> $GITHUB_OUTPUT
+              echo "Version $VERSION is new (current: $CURRENT_VERSION), proceeding with publish"
+            fi
           else
+            # Extension doesn't exist at all or error occurred
             echo "version_exists=false" >> $GITHUB_OUTPUT
-            echo "Version $VERSION is new, proceeding with publish"
+            echo "Extension not found or new version, proceeding with publish"
           fi
+
+          # Clean up
+          rm -f extension_info.json
 
       - name: Publish to VS Code Marketplace
         if: steps.check_version.outputs.version_exists == 'false'
