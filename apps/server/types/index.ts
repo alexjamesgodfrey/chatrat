@@ -1,5 +1,5 @@
 import { McpSlugResponse } from "@agentdb/sdk";
-import { SqlResults, SqlStatement } from "@chatrat/types";
+import { SqlResults, SqlStatement } from "@chatrat/types/src/index";
 import { Request } from "express";
 import z from "zod";
 

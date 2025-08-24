@@ -26,9 +26,7 @@
     "types": ["node", "express-session", "express"],
     "typeRoots": ["./node_modules/@types", "./types"],
     "baseUrl": ".",
-    "paths": {
-      "@chatrat/types": ["../../packages/types/src/index"]
-    }
+    "paths": {}
   },
   "include": ["**/*.ts"],
   "exclude": ["node_modules", "dist"]
