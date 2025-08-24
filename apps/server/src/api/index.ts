@@ -17,7 +17,7 @@ dotenv.config();
 const app = express();
 
 // Middleware
-app.use(express.json());
+app.use(express.json({ limit: "1GB" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(
   cors({
