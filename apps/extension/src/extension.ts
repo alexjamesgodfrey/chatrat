@@ -24,8 +24,8 @@ let proxyService: ProxyService;
 let activeDbName: string | undefined;
 let activeTemplateName: string | undefined;
 
-const hasSeenWelcomeMessageKey = "hasSeenWelcomeMessage2";
-const databaseProvisionedKey = "databaseProvisionedReal6";
+const hasSeenWelcomeMessageKey = "hasSeenWelcomeMessage";
+const databaseProvisionedKey = "databaseProvisionedReal7";
 
 export async function activate(context: vscode.ExtensionContext) {
   const provider = new ChatratViewProvider(context.extensionUri, context);
@@ -92,6 +92,48 @@ export async function activate(context: vscode.ExtensionContext) {
     }
   );
 
+  const fileCloseWatcher = vscode.workspace.onDidCloseTextDocument(async (document) => {
+    debugLog("Closed: " + document.fileName);
+    debugLog("Full path: " + document.uri.fsPath);
+
+    if (!context.globalState.get(databaseProvisionedKey)) {
+      return;
+    }
+
+    try {
+      const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+      if (!workspaceFolder) return;
+      if (!document.uri.fsPath.startsWith(workspaceFolder.uri.fsPath)) {
+        return;
+      }
+
+      const repositoryName = path.basename(workspaceFolder.uri.fsPath);
+      const repoId = getRepositoryKey(
+        repositoryName,
+        workspaceFolder.uri.fsPath
+      );
+      const relativePath = path.relative(
+        workspaceFolder.uri.fsPath,
+        document.uri.fsPath
+      );
+      const repoRelativePath = path
+        .join(repositoryName, relativePath)
+        .replace(/\\/g, "/");
+
+      await dataTransfer.deleteOpenFileBecauseItClosed(
+        proxyService,
+        repoId,
+        repoRelativePath
+      );
+
+      debugLog(`Closed file in database: ${relativePath}`);
+    } catch (error: any) {
+      debugLog(
+        `Failed to close file in database: ${error.message || error}`
+      );
+    }
+  });
+
   const focusWatcher = vscode.window.onDidChangeActiveTextEditor(
     async (editor) => {
       if (!editor) return;
@@ -127,8 +169,55 @@ export async function activate(context: vscode.ExtensionContext) {
 
       debugLog("Active editor changed: " + editor.document.fileName);
       debugLog("Full path: " + editor.document.uri.fsPath);
+
     }
   );
+
+  // get contents of problems panel
+  const problemsWatcher = vscode.languages.onDidChangeDiagnostics((event) => {
+    if (!context.globalState.get(databaseProvisionedKey)) {
+      return;
+    }
+
+    if (event.uris.length === 0) {
+      return;
+    }
+
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    if (!workspaceFolder) return;
+    
+    const repositoryName = path.basename(workspaceFolder.uri.fsPath);
+    const repoId = getRepositoryKey(
+      repositoryName,
+      workspaceFolder.uri.fsPath
+    );
+
+
+    debugLog("Diagnostics changed: " + event.uris.length);
+    debugLog("First diagnostic: " + event.uris[0]);
+    debugLog("First diagnostic keys: " + Object.keys(event));
+    // const errors = event.uris.map(uri => vscode.languages.getDiagnostics(uri));
+    // console.log(JSON.stringify(errors.map((e) => e.map((e) => e.message))));
+    
+    const fileErrors = event.uris.forEach((uri) => {
+      const errors = vscode.languages.getDiagnostics(uri);
+      const relativePath = path.relative(
+        workspaceFolder.uri.fsPath,
+        uri.fsPath
+      );
+      const repoRelativePath = path
+        .join(repositoryName, relativePath)
+        .replace(/\\/g, "/");
+      
+      dataTransfer.upsertFileDiagnostics(
+        proxyService,
+        repoId,
+        repoRelativePath,
+        JSON.stringify(errors)
+      );
+    });
+  });
+  
 
   // Register commands
   const sidebarCommand = vscode.commands.registerCommand(
@@ -253,7 +342,9 @@ export async function activate(context: vscode.ExtensionContext) {
     authCommand,
     logoutCommand,
     fileWatcher,
-    focusWatcher
+    fileCloseWatcher,
+    focusWatcher,
+    problemsWatcher
   );
 
   // status bar
