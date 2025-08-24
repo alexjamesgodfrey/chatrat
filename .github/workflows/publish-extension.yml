@@ -125,7 +125,7 @@ jobs:
         working-directory: apps/extension
         run: |
           echo "Packaging extension..."
-          vsce package --out extension-${{ steps.version.outputs.version }}.vsix
+          vsce package --out extension-${{ steps.version.outputs.version }}.vsix --no-dependencies
 
           # Verify the package was created
           if [ ! -f "extension-${{ steps.version.outputs.version }}.vsix" ]; then
