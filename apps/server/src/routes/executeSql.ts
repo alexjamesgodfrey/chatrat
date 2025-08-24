@@ -1,4 +1,4 @@
-import { Router } from "express";
+import express, { Router } from "express";
 import { requireAuth } from "../middleware/requireAuth";
 import { validateSchema } from "../middleware/validateSchema";
 import { validateSession } from "../middleware/validateSession";
@@ -14,7 +14,7 @@ router.post(
   validateSession,
   attachDatabaseProvider,
   validateSchema(executeSqlSchema),
-  async (req, res) => {
+  async (req: express.Request, res: express.Response) => {
     const {
       dbProvider,
       body: { statements },
