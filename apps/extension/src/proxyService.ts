@@ -90,7 +90,7 @@ export class ProxyService {
       const body: ExecuteSqlSchema = {
         statements,
       };
-      const response = await this.httpClient.post("/api/execute", body);
+      const response = await this.httpClient.post("/api/execute-sql", body);
 
       return response.data;
     } catch (error) {

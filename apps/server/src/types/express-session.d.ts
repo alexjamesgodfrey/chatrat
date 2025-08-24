@@ -5,7 +5,7 @@ import type {
   dbProviderType,
   GitHubUser,
   PostgresConnection,
-} from "../types";
+} from ".";
 
 declare module "express-session" {
   interface SessionData {

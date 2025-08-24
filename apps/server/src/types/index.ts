@@ -1,7 +1,12 @@
+import { SqlStatement } from "@chatrat/types";
 import { Request } from "express";
 import z from "zod";
 
 export const dbProviderType = ["postgres", "agentdb"] as const;
+export interface DatabaseProvider {
+  executeSql(statements: SqlStatement[]): Promise<void>;
+  seedDatabaseIfNecessary(): Promise<void>;
+}
 
 const GitHubUser = z.object({
   id: z.number(),
@@ -11,31 +16,22 @@ const GitHubUser = z.object({
 });
 export type GitHubUser = z.infer<typeof GitHubUser>;
 
-const AgentDbConnectionConfig = z.object({
-  dbName: z.string(),
-  token: z.string().optional(),
-  apiKey: z.string().optional(),
-});
-export type AgentDbConnectionConfig = z.infer<typeof AgentDbConnectionConfig>;
-
-const PostgresConnection = z.object({
-  connectionString: z.string(),
-});
-export type PostgresConnection = z.infer<typeof PostgresConnection>;
-
 export const AuthenticatedRequestSchema = z.object({
   session: z.object({
     githubToken: z.string(),
     githubUser: GitHubUser,
     dbProviderType: z.enum(dbProviderType),
-    agentDbConnection: AgentDbConnectionConfig.optional(),
-    postgresConnection: PostgresConnection.optional(),
+    connectionString: z.string().optional(),
   }),
 });
 
 export type AuthenticatedSession = z.infer<typeof AuthenticatedRequestSchema>;
 
 export type AuthenticatedRequest = Request & AuthenticatedSession;
+
+export type RequestWithProvider = AuthenticatedRequest & {
+  dbProvider: DatabaseProvider;
+};
 
 // export interface AuthenticatedRequest extends Request {
 //   session: session.Session & {

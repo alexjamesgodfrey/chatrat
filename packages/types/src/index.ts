@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-// /api/execute
+// /api/execute-sql
 export const SqlStatement = z.object({
   sql: z.string(),
   params: z.array(z.any()).optional().default([]),

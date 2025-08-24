@@ -1,20 +1,14 @@
 import DatabaseService, { DatabaseConnection } from "@agentdb/sdk";
 import { Pool } from "pg";
-import {
-  AgentDbConnectionConfig,
-  AuthenticatedRequest,
-  SqlStatement,
-} from "../types";
+import { AuthenticatedRequest, DatabaseProvider } from "../types";
 import {
   AGENTDB_BASE_URL,
   AGENTDB_CLIENT_DEBUG,
   DEFAULT_AGENTDB_DB_API_KEY,
   DEFAULT_AGENTDB_TOKEN,
 } from "./const";
-
-interface DatabaseProvider {
-  executeSql(statements: SqlStatement[]): Promise<void>;
-}
+import { SqlStatement } from "@chatrat/types";
+import { validateAgentDbString } from "./validate-db";
 
 class AgentDBDatabase implements DatabaseProvider {
   private token: string;
@@ -23,16 +17,14 @@ class AgentDBDatabase implements DatabaseProvider {
   private client: DatabaseService | null = null;
   private connection: DatabaseConnection | null = null;
 
-  constructor(agentDBConnectionConfig: AgentDbConnectionConfig) {
-    const {
-      token = DEFAULT_AGENTDB_TOKEN,
-      apiKey = DEFAULT_AGENTDB_DB_API_KEY,
-      dbName,
-    } = agentDBConnectionConfig;
-
+  constructor(
+    dbName: string,
+    token: string = DEFAULT_AGENTDB_TOKEN,
+    apiKey: string = DEFAULT_AGENTDB_DB_API_KEY
+  ) {
     this.token = token;
-    this.apiKey = apiKey;
     this.dbName = dbName;
+    this.apiKey = apiKey;
     this.initialize();
   }
 
@@ -55,9 +47,19 @@ class AgentDBDatabase implements DatabaseProvider {
 
     await this.connection.execute(statements);
   }
+
+  async seedDatabaseIfNecessary(): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
 }
 
 class PostgresDatabase implements DatabaseProvider {
+  seedDatabaseIfNecessary(): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+  seedDatabase(): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
   async executeSql(statements: SqlStatement[]) {
     throw new Error("Method not implemented.");
   }
@@ -81,10 +83,24 @@ export async function getDatabaseProviderFromAuthenticatedRequest(
 
   switch (provider) {
     case "agentdb":
+      // they use our own connection string
       if (!req.session.agentDbConnection) {
-        throw new Error("AgentDB connection details not found in session");
+        return new AgentDBDatabase(req.session.githubUser.login);
       }
-      return new AgentDBDatabase(req.session.agentDbConnection);
+
+      const agentDbValidationResult = validateAgentDbString(
+        req.session.connectionString
+      );
+
+      if (!agentDbValidationResult.isValid) {
+        throw new Error(agentDbValidationResult.error);
+      }
+
+      return new AgentDBDatabase(
+        agentDbValidationResult.components!.dbName,
+        agentDbValidationResult.components!.token,
+        agentDbValidationResult.components!.apiKey
+      );
     case "postgres":
       throw new Error("We don't really support Postgres yet 😅");
     default:

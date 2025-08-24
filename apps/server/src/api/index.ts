@@ -7,15 +7,6 @@ import session from "express-session";
 import path from "path";
 
 // Import route modules
-import agentdbExecuteRouter, {
-  setAgentDbService as setAgentDbServiceExecute,
-} from "../routes/agentdbExecute";
-import connectRouter, {
-  setAgentDbService as setAgentDbServiceConnect,
-} from "../routes/connect";
-import copyRouter, {
-  setAgentDbService as setAgentDbServiceCopy,
-} from "../routes/copy";
 import executeSqlRouter from "../routes/executeSql";
 import healthRouter, {
   setAgentDbService as setAgentDbServiceHealth,
@@ -145,9 +136,6 @@ function initializeAgentDB() {
 
   // Inject the service into route modules
   if (agentDbService) {
-    setAgentDbServiceExecute(agentDbService);
-    setAgentDbServiceConnect(agentDbService);
-    setAgentDbServiceCopy(agentDbService);
     setAgentDbServiceHealth(agentDbService);
     setAgentDbServiceMcp(agentDbService);
   }
@@ -211,9 +199,6 @@ function initializeSession() {
 initializeSession();
 
 // Use route modules
-app.use(agentdbExecuteRouter);
-app.use(connectRouter);
-app.use(copyRouter);
 app.use(executeSqlRouter);
 app.use(healthRouter);
 app.use(mcpSlugRouter);
