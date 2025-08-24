@@ -5,10 +5,15 @@ import { Request, RequestHandler } from "express";
 import type { AuthenticatedRequest } from "../types";
 
 function isAuthenticated(req: Request): req is AuthenticatedRequest {
-  return !!(req.session?.githubToken && req.session?.githubUser);
+  const aReq = req as AuthenticatedRequest;
+  return !!(aReq.session?.githubToken && aReq.session?.githubUser);
 }
 
 export const requireAuth: RequestHandler = async (req, res: Response, next) => {
+  if (!isAuthenticated(req)) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+
   const authHeader = req.headers.authorization;
 
   if (authHeader?.startsWith("Bearer ")) {

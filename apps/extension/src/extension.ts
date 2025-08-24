@@ -188,6 +188,11 @@ async function createDatabaseWithTemplate(context: vscode.ExtensionContext) {
 async function ensureDatabase(context: vscode.ExtensionContext): Promise<void> {
   try {
     if (context.globalState.get("databaseProvisioned")) {
+      const outputChannel = vscode.window.createOutputChannel(
+        "Chatrat - Ensure Database"
+      );
+      outputChannel.appendLine(`Database already provisioned`);
+      outputChannel.show();
       return;
     }
 

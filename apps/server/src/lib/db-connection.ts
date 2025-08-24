@@ -1,4 +1,7 @@
-import DatabaseService, { DatabaseConnection, DatabaseType as AgentDBDatabaseType } from "@agentdb/sdk";
+import DatabaseService, {
+  DatabaseConnection,
+  DatabaseType as AgentDBDatabaseType,
+} from "@agentdb/sdk";
 import { Pool } from "pg";
 import { AuthenticatedRequest, DatabaseProvider } from "../types";
 import {
@@ -31,7 +34,6 @@ class AgentDBDatabase implements DatabaseProvider {
   }
 
   async initialize(): Promise<void> {
-
     this.client = new DatabaseService(
       AGENTDB_BASE_URL,
       this.apiKey,
@@ -71,8 +73,11 @@ class AgentDBDatabase implements DatabaseProvider {
   async seedDatabaseIfNecessary(): Promise<void> {
     const templateNames = [CHATRAT_TEMPLATE_NAME];
     this.client?._createDatabaseWithTemplates(
-      this.token, this.dbName, this.dbType, templateNames
-    )
+      this.token,
+      this.dbName,
+      this.dbType,
+      templateNames
+    );
   }
 }
 

@@ -14,9 +14,13 @@ router.post(
   async (req, res) => {
     const { dbProvider } = req as RequestWithProvider;
 
+    console.log("dbProvider", dbProvider);
+
     try {
       await dbProvider.seedDatabaseIfNecessary();
+      console.log("seeded");
     } catch (error) {
+      console.error("error", error);
       return res.status(500).json({
         success: false,
         message: "Failed to seed database",
