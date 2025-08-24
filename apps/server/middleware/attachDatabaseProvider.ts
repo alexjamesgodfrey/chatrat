@@ -1,6 +1,6 @@
 import { NextFunction, Response, Request } from "express";
-import { getDatabaseProviderFromAuthenticatedRequest } from "src/lib/db-connection";
-import { AuthenticatedRequest, RequestWithProvider } from "src/types";
+import { getDatabaseProviderFromAuthenticatedRequest } from "lib/db-connection";
+import { AuthenticatedRequest, RequestWithProvider } from "types";
 
 export const attachDatabaseProvider = async (
   req: Request,

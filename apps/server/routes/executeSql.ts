@@ -4,7 +4,7 @@ import { validateSchema } from "../middleware/validateSchema";
 import { validateSession } from "../middleware/validateSession";
 import { RequestWithProvider } from "../types";
 import { executeSqlSchema } from "@chatrat/types";
-import { attachDatabaseProvider } from "src/middleware/attachDatabaseProvider";
+import { attachDatabaseProvider } from "middleware/attachDatabaseProvider";
 
 const router = Router();
 

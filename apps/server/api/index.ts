@@ -6,10 +6,10 @@ import session from "express-session";
 import path from "path";
 
 // Import route modules
-import executeSqlRouter from "../src/routes/executeSql";
-import mcpSlugRouter from "../src/routes/createMcpSlug";
-import checkOrSeedRouter from "../src/routes/checkOrSeed";
-import healthRouter from "../src/routes/health";
+import executeSqlRouter from "../routes/executeSql";
+import mcpSlugRouter from "../routes/createMcpSlug";
+import checkOrSeedRouter from "../routes/checkOrSeed";
+import healthRouter from "../routes/health";
 
 // Load environment variables
 dotenv.config();
