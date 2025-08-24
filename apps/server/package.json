@@ -18,7 +18,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@agentdb/sdk": "^1.1.8",
+    "@agentdb/sdk": "^1.1.12",
     "@upstash/redis": "^1.24.5",
     "axios": "^1.7.9",
     "cors": "^2.8.5",
