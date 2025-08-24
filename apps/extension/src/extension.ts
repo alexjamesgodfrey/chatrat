@@ -187,18 +187,21 @@ async function createDatabaseWithTemplate(context: vscode.ExtensionContext) {
 
 async function ensureDatabase(context: vscode.ExtensionContext): Promise<void> {
   try {
-    if (context.globalState.get("databaseProvisioned")) {
-      const outputChannel = vscode.window.createOutputChannel(
-        "Chatrat - Ensure Database"
-      );
+    const outputChannel = vscode.window.createOutputChannel(
+      "Chatrat - Ensure Database"
+    );
+
+    if (context.globalState.get("databaseProvisioned2")) {
       outputChannel.appendLine(`Database already provisioned`);
       outputChannel.show();
       return;
     }
 
+    outputChannel.appendLine(`Provisioning database...`);
     await createDatabaseWithTemplate(context);
 
-    console.log(`Database ready`);
+    outputChannel.appendLine(`Database ready`);
+    outputChannel.show();
   } catch (error) {
     console.error("Database connection error:", error);
     throw new Error(`Failed to connect to database: ${error}`);

@@ -73,7 +73,7 @@
         },
         "chatrat.serverBaseUrl": {
           "type": "string",
-          "default": "https://api.chatrat.cat",
+          "default": "http://localhost:3000",
           "description": "Base URL of the authentication and proxy server"
         }
       }

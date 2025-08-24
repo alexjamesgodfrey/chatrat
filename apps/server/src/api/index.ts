@@ -1,4 +1,3 @@
-import { DatabaseService } from "@agentdb/sdk";
 import { Redis } from "@upstash/redis";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -112,28 +111,6 @@ class UpstashRedisStore extends (session.Store as any) {
 
 // Serve static files from /public
 app.use(express.static(path.join(__dirname, "..", "public")));
-
-// Types
-
-// AgentDB service instance
-let agentDbService: DatabaseService | undefined;
-
-// Initialize AgentDB service
-function initializeAgentDB() {
-  const apiKey = process.env.AGENTDB_API_KEY;
-  const baseUrl = process.env.AGENTDB_BASE_URL || "https://api.agentdb.dev";
-
-  if (!apiKey) {
-    console.error("AGENTDB_API_KEY not configured");
-    return;
-  }
-
-  agentDbService = new DatabaseService(baseUrl, apiKey);
-  console.log("AgentDB service initialized");
-}
-
-// Initialize on startup
-initializeAgentDB();
 
 // Initialize session middleware
 function initializeSession() {

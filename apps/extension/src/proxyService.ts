@@ -1,7 +1,7 @@
+import { ExecuteSqlSchema, SqlStatement } from "@chatrat/types";
 import axios, { AxiosInstance } from "axios";
 import * as vscode from "vscode";
 import { AuthService } from "./authService";
-import { ExecuteSqlSchema, SqlStatement } from "@chatrat/types";
 
 export interface DatabaseInfo {
   name: string;
@@ -96,7 +96,7 @@ export class ProxyService {
     } catch (error) {
       console.error("Execute query error:", error);
       throw new Error(
-        `Failed to execute query: ${this.getErrorMessage(error)}`
+        `Failed to execute query: ${JSON.stringify(error, null, 2)}`
       );
     }
   }
@@ -107,6 +107,14 @@ export class ProxyService {
       return response.data;
     } catch (error) {
       console.error("Check or seed database error:", error);
+      const outputChannel = vscode.window.createOutputChannel(
+        "Chatrat - Check or Seed Database"
+      );
+      outputChannel.appendLine(`Check or seed database error: ${error}`);
+      outputChannel.show();
+      throw new Error(
+        `Failed to check or seed database: ${this.getErrorMessage(error)}`
+      );
     }
   }
 
