@@ -3,6 +3,10 @@ name: Publish VS Code Extension
 on:
   push:
     branches: [main]
+    paths:
+      - "apps/extension/**"
+      - ".github/workflows/publish-extension.yml"
+      - "pnpm-lock.yaml"
 
 permissions:
   contents: write
