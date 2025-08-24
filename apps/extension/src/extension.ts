@@ -36,6 +36,43 @@ export async function activate(context: vscode.ExtensionContext) {
   // Initialize authentication
   await authService.initialize();
 
+  // Set up file save event handler
+  const fileWatcher = vscode.workspace.onDidSaveTextDocument(async (document) => {
+    debugLog("Saved: " + document.fileName);
+    debugLog("Full path: " + document.uri.fsPath);
+
+    if (!context.globalState.get(databaseProvisionedKey)) {
+      return;
+    }
+
+    try {
+      const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+      if (!workspaceFolder) return;
+
+      const repositoryName = path.basename(workspaceFolder.uri.fsPath);
+      const repoId = getRepositoryKey(repositoryName, workspaceFolder.uri.fsPath);
+      const relativePath = path.relative(workspaceFolder.uri.fsPath, document.uri.fsPath);
+      const repoRelativePath = path.join(repositoryName, relativePath).replace(/\\/g, "/");
+
+      const content = document.getText();
+      const size = Buffer.byteLength(content, 'utf8');
+
+      await proxyService.executeQuery([{
+        sql: `INSERT INTO repository_files (repository_id, file_path, content, size, created_at)
+              VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+              ON CONFLICT(repository_id, file_path) DO UPDATE SET
+              content = excluded.content,
+              size = excluded.size,
+              created_at = CURRENT_TIMESTAMP`,
+        params: [repoId, repoRelativePath, content, size]
+      }]);
+
+      debugLog(`Updated file in database: ${repoRelativePath}`);
+    } catch (error: any) {
+      debugLog(`Failed to update file in database: ${error.message || error}`);
+    }
+  });
+
   // Register commands
   const captureCommand = vscode.commands.registerCommand(
     "chatrat.captureAndSend",
@@ -93,7 +130,8 @@ export async function activate(context: vscode.ExtensionContext) {
     clearCommand,
     mcpCommand,
     authCommand,
-    logoutCommand
+    logoutCommand,
+    fileWatcher
   );
 
   // Check server health
