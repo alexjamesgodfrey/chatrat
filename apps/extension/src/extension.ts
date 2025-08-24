@@ -25,7 +25,7 @@ let activeDbName: string | undefined;
 let activeTemplateName: string | undefined;
 
 const hasSeenWelcomeMessageKey = "hasSeenWelcomeMessage";
-const databaseProvisionedKey = "databaseProvisionedReal3";
+const databaseProvisionedKey = "databaseProvisionedReal4";
 
 export async function activate(context: vscode.ExtensionContext) {
   // Initialize services
