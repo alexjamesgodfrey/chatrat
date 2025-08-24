@@ -28,8 +28,8 @@ jobs:
           cache-dependency-path: apps/extension/package-lock.json
 
       - name: Install dependencies
-        working-directory: apps/extension
-        run: npm ci
+        working-directory: .
+        run: pnpm i --frozen-lockfile
 
       # - name: Run tests (if available)
       #   working-directory: apps/extension
