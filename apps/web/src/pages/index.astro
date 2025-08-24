@@ -1,63 +1,65 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import '../styles/globals.css';
 ---
 
 <Layout title="Chatrat - Smart Codebase Context for LLMs">
 	<!-- Navigation -->
-	<nav class="nav">
-		<div class="container">
-			<div class="nav-content">
+	<nav class="bg-white border-b border-gray-200 sticky top-0 z-50 backdrop-blur-sm">
+		<div class="max-w-6xl mx-auto px-4 md:px-8">
+			<div class="flex justify-between items-center py-4">
 				<div class="nav-brand">
-					<h2>Chatrat.cat</h2>
+					<h2 class="text-pink-500 text-2xl font-bold tracking-widest">💬🐀<span class="tracking-normal">.</span>😹</h2>
 				</div>
-				<div class="nav-links">
-					<a href="#features">Features</a>
-					<a href="#how-it-works">How it Works</a>
-					<a href="/privacy">Privacy</a>
-					<a href="/terms">Terms</a>
+				<div class="hidden md:flex gap-8 items-center">
+					<a href="#features" class="font-medium text-gray-800 hover:text-pink-500 transition-colors duration-200">Features</a>
+					<a href="#how-it-works" class="font-medium text-gray-800 hover:text-pink-500 transition-colors duration-200">How it Works</a>
+					<a href="/privacy" class="font-medium text-gray-800 hover:text-pink-500 transition-colors duration-200">Privacy</a>
+					<a href="/terms" class="font-medium text-gray-800 hover:text-pink-500 transition-colors duration-200">Terms</a>
 				</div>
 			</div>
 		</div>
 	</nav>
 
 	<!-- Hero Section -->
-	<section class="hero">
-		<div class="container">
-			<div class="hero-content">
-				<h1 class="hero-title">
-					Smart Codebase Context for <span class="text-primary">Claude & MCP</span>
-				</h1>
-				<p class="hero-description">
-					Index your entire codebase with our VSCode extension and seamlessly reference any file in your LLM chats via MCP.
-					Just mention a filename and get instant, accurate context without copy-pasting code. Works on Claude, ChatGPT, or and any other LLM that supports MCP.
-				</p>
-				<div class="hero-actions">
-					<a href="vscode:extension/your-publisher.repo-mcp" class="btn btn-primary">
-						<svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor">
-							<path d="M23.15 2.587L18.21.21a1.494 1.494 0 0 0-1.705.29l-9.46 8.63-4.12-3.128a.999.999 0 0 0-1.276.057L.327 7.261A1 1 0 0 0 .326 8.74L3.899 12 .326 15.26a1 1 0 0 0 .001 1.479L1.65 17.94a.999.999 0 0 0 1.276.057l4.12-3.128 9.46 8.63a1.492 1.492 0 0 0 1.704.29l4.942-2.377A1.5 1.5 0 0 0 24 20.06V3.939a1.5 1.5 0 0 0-.85-1.352zm-5.146 14.861L10.826 12l7.178-5.448v10.896z"/>
-						</svg>
-						Install VSCode Extension
-					</a>
-					<a href="#how-it-works" class="btn btn-secondary">Learn More</a>
-				</div>
-			</div>
-			<div class="hero-visual">
-				<div class="code-preview">
-					<div class="code-header">
-						<div class="code-dots">
-							<span></span>
-							<span></span>
-							<span></span>
-						</div>
-						<span class="code-title">claude.ai</span>
+	<section class="py-16 md:py-24 bg-gradient-to-br from-yellow-50 to-amber-100">
+		<div class="max-w-6xl mx-auto px-4 md:px-8">
+			<div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+				<div>
+					<h1 class="text-4xl md:text-6xl font-bold leading-tight mb-6">
+						Smart Codebase Context for <span class="text-pink-500">Claude & MCP</span>
+					</h1>
+					<p class="text-xl text-gray-600 mb-8 leading-relaxed">
+						Index your entire codebase and seamlessly reference any file in your LLM chats via MCP.
+						Just mention a filename and get instant, accurate context without copy-pasting code. Works on Claude, ChatGPT, or and any other LLM that supports MCP.
+					</p>
+					<div class="flex flex-wrap gap-4 justify-center lg:justify-start">
+						<a href="vscode:extension/serviettellc.chatrat" class="inline-flex items-center gap-2 px-6 py-3 bg-pink-500 text-white font-semibold rounded-lg shadow-md hover:bg-pink-600 hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200">
+							<svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+								<path d="M23.15 2.587L18.21.21a1.494 1.494 0 0 0-1.705.29l-9.46 8.63-4.12-3.128a.999.999 0 0 0-1.276.057L.327 7.261A1 1 0 0 0 .326 8.74L3.899 12 .326 15.26a1 1 0 0 0 .001 1.479L1.65 17.94a.999.999 0 0 0 1.276.057l4.12-3.128 9.46 8.63a1.492 1.492 0 0 0 1.704.29l4.942-2.377A1.5 1.5 0 0 0 24 20.06V3.939a1.5 1.5 0 0 0-.85-1.352zm-5.146 14.861L10.826 12l7.178-5.448v10.896z"/>
+							</svg>
+							Install VSCode Extension
+						</a>
+						
+						<a href="#how-it-works" class="inline-flex items-center gap-2 px-6 py-3 bg-white text-gray-800 font-semibold rounded-lg border-2 border-gray-200 hover:border-pink-500 hover:text-pink-500 transition-all duration-200">Learn More</a>
 					</div>
-					<div class="code-content">
-						<div class="chat-message user">
-							<strong>You:</strong> Can you help me understand the authentication logic in auth.ts?
+				</div>
+				<div class="mt-16 lg:mt-0 flex justify-center">
+					<div class="bg-white rounded-xl shadow-2xl overflow-hidden w-full max-w-md">
+						<div class="bg-gray-100 px-4 py-3 flex items-center gap-4">
+							<div class="flex gap-2">
+								<span class="w-3 h-3 rounded-full bg-red-400"></span>
+								<span class="w-3 h-3 rounded-full bg-yellow-400"></span>
+								<span class="w-3 h-3 rounded-full bg-green-400"></span>
+							</div>
+							<span class="font-semibold text-gray-800">claude.ai</span>
 						</div>
-						<div class="chat-message ai">
-							<strong>AI:</strong> I can see your auth.ts file. The authentication logic uses JWT tokens with...
+						<div class="p-6">
+							<div class="mb-4 p-3 bg-yellow-50 rounded-lg ml-4">
+								<strong>You:</strong> Can you help me understand the authentication logic in auth.ts?
+							</div>
+							<div class="p-3 bg-gray-100 rounded-lg mr-4">
+								<strong>AI:</strong> I can see your auth.ts file. The authentication logic uses JWT tokens with...
+							</div>
 						</div>
 					</div>
 				</div>
@@ -66,98 +68,98 @@ import '../styles/globals.css';
 	</section>
 
 	<!-- Features Section -->
-	<section id="features" class="features">
-		<div class="container">
-			<div class="section-header">
-				<h2>Why Choose Chatrat?</h2>
-				<p>Streamline your development workflow with intelligent codebase integration</p>
+	<section id="features" class="py-24 bg-white">
+		<div class="max-w-6xl mx-auto px-4 md:px-8">
+			<div class="text-center mb-16">
+				<h2 class="text-4xl font-bold mb-4 text-gray-800">Why Choose Chatrat?</h2>
+				<p class="text-xl text-gray-600">Streamline your development workflow with intelligent codebase integration</p>
 			</div>
-			<div class="features-grid">
-				<div class="feature-card">
-					<div class="feature-icon">
-						<svg viewBox="0 0 24 24" fill="currentColor">
+			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+				<div class="bg-yellow-50 p-8 rounded-xl text-center hover:-translate-y-1 hover:shadow-lg transition-all duration-200">
+					<div class="w-12 h-12 mx-auto mb-6 text-pink-500">
+						<svg viewBox="0 0 24 24" fill="currentColor" class="w-full h-full">
 							<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
 						</svg>
 					</div>
-					<h3>Instant Context</h3>
-					<p>Just mention any filename in your chat and get immediate access to the file's content and context.</p>
+					<h3 class="text-2xl font-semibold mb-4 text-gray-800">Instant Context</h3>
+					<p class="text-gray-600 leading-relaxed">Just mention any filename in your chat and get immediate access to the file's content and context.</p>
 				</div>
-				<div class="feature-card">
-					<div class="feature-icon">
-						<svg viewBox="0 0 24 24" fill="currentColor">
+				<div class="bg-yellow-50 p-8 rounded-xl text-center hover:-translate-y-1 hover:shadow-lg transition-all duration-200">
+					<div class="w-12 h-12 mx-auto mb-6 text-pink-500">
+						<svg viewBox="0 0 24 24" fill="currentColor" class="w-full h-full">
 							<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
 						</svg>
 					</div>
-					<h3>Automatic Indexing</h3>
-					<p>Our extension automatically indexes your entire codebase, keeping everything up-to-date in real-time.</p>
+					<h3 class="text-2xl font-semibold mb-4 text-gray-800">Automatic Indexing</h3>
+					<p class="text-gray-600 leading-relaxed">Our extension automatically indexes your entire codebase, keeping everything up-to-date in real-time.</p>
 				</div>
-				<div class="feature-card">
-					<div class="feature-icon">
-						<svg viewBox="0 0 24 24" fill="currentColor">
+				<div class="bg-yellow-50 p-8 rounded-xl text-center hover:-translate-y-1 hover:shadow-lg transition-all duration-200">
+					<div class="w-12 h-12 mx-auto mb-6 text-pink-500">
+						<svg viewBox="0 0 24 24" fill="currentColor" class="w-full h-full">
 							<path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
 						</svg>
 					</div>
-					<h3>Privacy First</h3>
-					<p>Your code stays local. We use MCP (Model Context Protocol) to securely share context without uploading files.</p>
+					<h3 class="text-2xl font-semibold mb-4 text-gray-800">Privacy First</h3>
+					<p class="text-gray-600 leading-relaxed">Your code stays local. We use MCP (Model Context Protocol) to securely share context without uploading files.</p>
 				</div>
-				<div class="feature-card">
-					<div class="feature-icon">
-						<svg viewBox="0 0 24 24" fill="currentColor">
+				<div class="bg-yellow-50 p-8 rounded-xl text-center hover:-translate-y-1 hover:shadow-lg transition-all duration-200">
+					<div class="w-12 h-12 mx-auto mb-6 text-pink-500">
+						<svg viewBox="0 0 24 24" fill="currentColor" class="w-full h-full">
 							<path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
 						</svg>
 					</div>
-					<h3>Multi-Language Support</h3>
-					<p>Works with any programming language and framework. From JavaScript to Python, Rust to Go.</p>
+					<h3 class="text-2xl font-semibold mb-4 text-gray-800">Multi-Language Support</h3>
+					<p class="text-gray-600 leading-relaxed">Works with any programming language and framework. From JavaScript to Python, Rust to Go.</p>
 				</div>
-				<div class="feature-card">
-					<div class="feature-icon">
-						<svg viewBox="0 0 24 24" fill="currentColor">
+				<div class="bg-yellow-50 p-8 rounded-xl text-center hover:-translate-y-1 hover:shadow-lg transition-all duration-200">
+					<div class="w-12 h-12 mx-auto mb-6 text-pink-500">
+						<svg viewBox="0 0 24 24" fill="currentColor" class="w-full h-full">
 							<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
 						</svg>
 					</div>
-					<h3>LLM Agnostic</h3>
-					<p>Works with any LLM that supports MCP - Claude, ChatGPT, and more. Choose your preferred AI assistant.</p>
+					<h3 class="text-2xl font-semibold mb-4 text-gray-800">LLM Agnostic</h3>
+					<p class="text-gray-600 leading-relaxed">Works with any LLM that supports MCP - Claude, ChatGPT, and more. Choose your preferred AI assistant.</p>
 				</div>
-				<div class="feature-card">
-					<div class="feature-icon">
-						<svg viewBox="0 0 24 24" fill="currentColor">
+				<div class="bg-yellow-50 p-8 rounded-xl text-center hover:-translate-y-1 hover:shadow-lg transition-all duration-200">
+					<div class="w-12 h-12 mx-auto mb-6 text-pink-500">
+						<svg viewBox="0 0 24 24" fill="currentColor" class="w-full h-full">
 							<path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9z"/>
 						</svg>
 					</div>
-					<h3>Zero Configuration</h3>
-					<p>Install the extension and you're ready to go. No complex setup, no API keys, no configuration files.</p>
+					<h3 class="text-2xl font-semibold mb-4 text-gray-800">Zero Configuration</h3>
+					<p class="text-gray-600 leading-relaxed">Install the extension and you're ready to go. No complex setup, no API keys, no configuration files.</p>
 				</div>
 			</div>
 		</div>
 	</section>
 
 	<!-- How it Works Section -->
-	<section id="how-it-works" class="how-it-works">
-		<div class="container">
-			<div class="section-header">
-				<h2>How It Works</h2>
-				<p>Get started in three simple steps</p>
+	<section id="how-it-works" class="py-24 bg-yellow-50">
+		<div class="max-w-6xl mx-auto px-4 md:px-8">
+			<div class="text-center mb-16">
+				<h2 class="text-4xl font-bold mb-4 text-gray-800">How It Works</h2>
+				<p class="text-xl text-gray-600">Get started in three simple steps</p>
 			</div>
-			<div class="steps">
-				<div class="step">
-					<div class="step-number">1</div>
-					<div class="step-content">
-						<h3>Install Extension</h3>
-						<p>Install the Chatrat extension from the VSCode marketplace with one click.</p>
+			<div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+				<div class="flex items-start gap-6">
+					<div class="w-12 h-12 bg-pink-500 text-white rounded-full flex items-center justify-center font-bold text-xl flex-shrink-0">1</div>
+					<div>
+						<h3 class="text-2xl font-semibold mb-2 text-gray-800">Install Extension</h3>
+						<p class="text-gray-600 leading-relaxed">Install the Chatrat extension from the VSCode marketplace with one click.</p>
 					</div>
 				</div>
-				<div class="step">
-					<div class="step-number">2</div>
-					<div class="step-content">
-						<h3>Auto-Index Codebase</h3>
-						<p>The extension automatically scans and indexes your project files in the background.</p>
+				<div class="flex items-start gap-6">
+					<div class="w-12 h-12 bg-pink-500 text-white rounded-full flex items-center justify-center font-bold text-xl flex-shrink-0">2</div>
+					<div>
+						<h3 class="text-2xl font-semibold mb-2 text-gray-800">Auto-Index Codebase</h3>
+						<p class="text-gray-600 leading-relaxed">The extension automatically scans and indexes your project files in the background.</p>
 					</div>
 				</div>
-				<div class="step">
-					<div class="step-number">3</div>
-					<div class="step-content">
-						<h3>Chat with Context</h3>
-						<p>Connect your LLM to the MCP server and reference any file by name in your conversations.</p>
+				<div class="flex items-start gap-6">
+					<div class="w-12 h-12 bg-pink-500 text-white rounded-full flex items-center justify-center font-bold text-xl flex-shrink-0">3</div>
+					<div>
+						<h3 class="text-2xl font-semibold mb-2 text-gray-800">Chat with Context</h3>
+						<p class="text-gray-600 leading-relaxed">Connect your LLM to our MCP server and reference any file by name in your conversations.</p>
 					</div>
 				</div>
 			</div>
@@ -165,452 +167,50 @@ import '../styles/globals.css';
 	</section>
 
 	<!-- CTA Section -->
-	<section class="cta">
-		<div class="container">
-			<div class="cta-content">
-				<h2>Ready to Transform Your Development Workflow?</h2>
-				<p>Join thousands of developers who are already using Chatrat to supercharge their coding conversations.</p>
-				<a href="vscode:extension/your-publisher.repo-mcp" class="btn btn-primary btn-large">
-					<svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor">
-						<path d="M23.15 2.587L18.21.21a1.494 1.494 0 0 0-1.705.29l-9.46 8.63-4.12-3.128a.999.999 0 0 0-1.276.057L.327 7.261A1 1 0 0 0 .326 8.74L3.899 12 .326 15.26a1 1 0 0 0 .001 1.479L1.65 17.94a.999.999 0 0 0 1.276.057l4.12-3.128 9.46 8.63a1.492 1.492 0 0 0 1.704.29l4.942-2.377A1.5 1.5 0 0 0 24 20.06V3.939a1.5 1.5 0 0 0-.85-1.352zm-5.146 14.861L10.826 12l7.178-5.448v10.896z"/>
-					</svg>
-					Install VSCode Extension
-				</a>
-			</div>
+	<section class="py-24 bg-white text-center">
+		<div class="max-w-4xl mx-auto px-4 md:px-8">
+			<h2 class="text-4xl font-bold mb-4 text-gray-800">Ready to Transform Your Development Workflow?</h2>
+			<p class="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">Join thousands of developers who are already using Chatrat to supercharge their coding conversations.</p>
+			<a href="vscode:extension/serviettellc.chatrat" class="inline-flex items-center gap-2 px-8 py-4 mb-4 md:mb-0 md:mr-12 bg-pink-500 text-white font-semibold text-lg rounded-lg shadow-md hover:bg-pink-600 hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200">
+				<svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+					<path d="M23.15 2.587L18.21.21a1.494 1.494 0 0 0-1.705.29l-9.46 8.63-4.12-3.128a.999.999 0 0 0-1.276.057L.327 7.261A1 1 0 0 0 .326 8.74L3.899 12 .326 15.26a1 1 0 0 0 .001 1.479L1.65 17.94a.999.999 0 0 0 1.276.057l4.12-3.128 9.46 8.63a1.492 1.492 0 0 0 1.704.29l4.942-2.377A1.5 1.5 0 0 0 24 20.06V3.939a1.5 1.5 0 0 0-.85-1.352zm-5.146 14.861L10.826 12l7.178-5.448v10.896z"/>
+				</svg>
+				Install VSCode Extension
+			</a>
 		</div>
+		
 	</section>
 
 	<!-- Footer -->
-	<footer class="footer">
-		<div class="container">
-			<div class="footer-content">
-				<div class="footer-brand">
-					<h3>Chatrat</h3>
-					<p>Smart codebase context for ChatGPT, Claude, and more</p>
+	<footer class="bg-gray-900 text-white py-12">
+		<div class="max-w-6xl mx-auto px-4 md:px-8">
+			<div class="grid grid-cols-1 md:grid-cols-3 gap-12 mb-8">
+				<div>
+					<h3 class="text-pink-500 text-xl font-bold mb-2">Chatrat</h3>
+					<p class="text-gray-300">Smart codebase context for ChatGPT, Claude, and more</p>
 				</div>
-				<div class="footer-links">
-					<div class="footer-section">
-						<h4>Product</h4>
-						<a href="#features">Features</a>
-						<a href="#how-it-works">How it Works</a>
-						<a href="https://github.com/your-username/repo-mcp">GitHub</a>
+				<div>
+					<h4 class="font-semibold mb-4 text-white">Product</h4>
+					<div class="space-y-2">
+						<a href="#features" class="block text-gray-300 hover:text-pink-500 transition-colors duration-200">Features</a>
+						<a href="#how-it-works" class="block text-gray-300 hover:text-pink-500 transition-colors duration-200">How it Works</a>
+						<a href="https://github.com/alexjamesgodfrey/chatrat" class="block text-gray-300 hover:text-pink-500 transition-colors duration-200">GitHub</a>
 					</div>
-					<div class="footer-section">
-						<h4>Legal</h4>
-						<a href="/privacy">Privacy Policy</a>
-						<a href="/terms">Terms of Service</a>
+				</div>
+				<div>
+					<h4 class="font-semibold mb-4 text-white">Legal</h4>
+					<div class="space-y-2">
+						<a href="/privacy" class="block text-gray-300 hover:text-pink-500 transition-colors duration-200">Privacy Policy</a>
+						<a href="/terms" class="block text-gray-300 hover:text-pink-500 transition-colors duration-200">Terms of Service</a>
 					</div>
 				</div>
 			</div>
-			<div class="footer-bottom">
-				<p>&copy; 2025 Chatrat. All rights reserved.</p>
+			<div class="border-t border-gray-800 pt-4 text-center">
+				<p class="text-gray-300">&copy; 2025 Chatrat. Contact us at <a href="mailto:grep@chatrat.cat" class="text-pink-500 hover:text-pink-400 transition-colors duration-200">grep@chatrat.cat</a></p>
 			</div>
 		</div>
 	</footer>
 </Layout>
 
-<style>
-	/* Navigation */
-	.nav {
-		background: var(--color-white);
-		border-bottom: 1px solid var(--color-gray-200);
-		position: sticky;
-		top: 0;
-		z-index: 50;
-		backdrop-filter: blur(10px);
-	}
 
-	.nav-content {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		padding: 1rem 0;
-	}
 
-	.nav-brand h2 {
-		color: var(--color-primary);
-		font-size: 1.5rem;
-		font-weight: 700;
-	}
-
-	.nav-links {
-		display: flex;
-		gap: 2rem;
-		align-items: center;
-	}
-
-	.nav-links a {
-		font-weight: 500;
-		color: var(--color-text);
-		transition: color 0.2s ease;
-	}
-
-	.nav-links a:hover {
-		color: var(--color-primary);
-	}
-
-	/* Hero Section */
-	.hero {
-		padding: 4rem 0 6rem;
-		background: linear-gradient(135deg, var(--color-background) 0%, var(--color-background-alt) 100%);
-	}
-
-	.hero-content {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 4rem;
-		align-items: center;
-	}
-
-	.hero-title {
-		font-size: 3.5rem;
-		font-weight: 700;
-		line-height: 1.1;
-		margin-bottom: 1.5rem;
-	}
-
-	.text-primary {
-		color: var(--color-primary);
-	}
-
-	.hero-description {
-		font-size: 1.25rem;
-		color: var(--color-text-light);
-		margin-bottom: 2rem;
-		line-height: 1.6;
-	}
-
-	.hero-actions {
-		display: flex;
-		gap: 1rem;
-		flex-wrap: wrap;
-	}
-
-	/* Buttons */
-	.btn {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.5rem;
-		padding: 0.75rem 1.5rem;
-		border-radius: var(--border-radius);
-		font-weight: 600;
-		text-decoration: none;
-		transition: all 0.2s ease;
-		border: none;
-		cursor: pointer;
-		font-size: 1rem;
-	}
-
-	.btn-primary {
-		background: var(--color-primary);
-		color: var(--color-white);
-		box-shadow: var(--shadow-md);
-	}
-
-	.btn-primary:hover {
-		background: var(--color-primary-dark);
-		transform: translateY(-2px);
-		box-shadow: var(--shadow-lg);
-		color: var(--color-white);
-	}
-
-	.btn-secondary {
-		background: var(--color-white);
-		color: var(--color-text);
-		border: 2px solid var(--color-gray-200);
-	}
-
-	.btn-secondary:hover {
-		border-color: var(--color-primary);
-		color: var(--color-primary);
-	}
-
-	.btn-large {
-		padding: 1rem 2rem;
-		font-size: 1.125rem;
-	}
-
-	.btn-icon {
-		width: 1.25rem;
-		height: 1.25rem;
-	}
-
-	/* Hero Visual */
-	.hero-visual {
-		margin-top: 4rem;
-		display: flex;
-		justify-content: center;
-	}
-
-	.code-preview {
-		background: var(--color-white);
-		border-radius: var(--border-radius-lg);
-		box-shadow: var(--shadow-xl);
-		overflow: hidden;
-		width: 100%;
-		max-width: 500px;
-	}
-
-	.code-header {
-		background: var(--color-gray-100);
-		padding: 1rem;
-		display: flex;
-		align-items: center;
-		gap: 1rem;
-	}
-
-	.code-dots {
-		display: flex;
-		gap: 0.5rem;
-	}
-
-	.code-dots span {
-		width: 12px;
-		height: 12px;
-		border-radius: 50%;
-		background: var(--color-gray-200);
-	}
-
-	.code-dots span:nth-child(1) { background: #ff5f57; }
-	.code-dots span:nth-child(2) { background: #ffbd2e; }
-	.code-dots span:nth-child(3) { background: #28ca42; }
-
-	.code-title {
-		font-weight: 600;
-		color: var(--color-text);
-	}
-
-	.code-content {
-		padding: 1.5rem;
-	}
-
-	.chat-message {
-		margin-bottom: 1rem;
-		padding: 0.75rem;
-		border-radius: var(--border-radius);
-	}
-
-	.chat-message.user {
-		background: var(--color-background);
-		margin-left: 1rem;
-	}
-
-	.chat-message.ai {
-		background: var(--color-gray-100);
-		margin-right: 1rem;
-	}
-
-	/* Features Section */
-	.features {
-		padding: 6rem 0;
-		background: var(--color-white);
-	}
-
-	.section-header {
-		text-align: center;
-		margin-bottom: 4rem;
-	}
-
-	.section-header h2 {
-		font-size: 2.5rem;
-		margin-bottom: 1rem;
-		color: var(--color-text);
-	}
-
-	.section-header p {
-		font-size: 1.25rem;
-		color: var(--color-text-light);
-	}
-
-	.features-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-		gap: 2rem;
-	}
-
-	.feature-card {
-		background: var(--color-background);
-		padding: 2rem;
-		border-radius: var(--border-radius-lg);
-		text-align: center;
-		transition: transform 0.2s ease, box-shadow 0.2s ease;
-	}
-
-	.feature-card:hover {
-		transform: translateY(-4px);
-		box-shadow: var(--shadow-lg);
-	}
-
-	.feature-icon {
-		width: 3rem;
-		height: 3rem;
-		margin: 0 auto 1.5rem;
-		color: var(--color-primary);
-	}
-
-	.feature-icon svg {
-		width: 100%;
-		height: 100%;
-	}
-
-	.feature-card h3 {
-		font-size: 1.5rem;
-		margin-bottom: 1rem;
-		color: var(--color-text);
-	}
-
-	.feature-card p {
-		color: var(--color-text-light);
-		line-height: 1.6;
-	}
-
-	/* How it Works Section */
-	.how-it-works {
-		padding: 6rem 0;
-		background: var(--color-background);
-	}
-
-	.steps {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-		gap: 3rem;
-	}
-
-	.step {
-		display: flex;
-		align-items: flex-start;
-		gap: 1.5rem;
-	}
-
-	.step-number {
-		width: 3rem;
-		height: 3rem;
-		background: var(--color-primary);
-		color: var(--color-white);
-		border-radius: 50%;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-weight: 700;
-		font-size: 1.25rem;
-		flex-shrink: 0;
-	}
-
-	.step-content h3 {
-		font-size: 1.5rem;
-		margin-bottom: 0.5rem;
-		color: var(--color-text);
-	}
-
-	.step-content p {
-		color: var(--color-text-light);
-		line-height: 1.6;
-	}
-
-	/* CTA Section */
-	.cta {
-		padding: 6rem 0;
-		background: var(--color-white);
-		text-align: center;
-	}
-
-	.cta-content h2 {
-		font-size: 2.5rem;
-		margin-bottom: 1rem;
-		color: var(--color-text);
-	}
-
-	.cta-content p {
-		font-size: 1.25rem;
-		color: var(--color-text-light);
-		margin-bottom: 2rem;
-		max-width: 600px;
-		margin-left: auto;
-		margin-right: auto;
-	}
-
-	/* Footer */
-	.footer {
-		background: var(--color-gray-900);
-		color: var(--color-white);
-		padding: 3rem 0 1rem;
-	}
-
-	.footer-content {
-		display: grid;
-		grid-template-columns: 1fr 2fr;
-		gap: 3rem;
-		margin-bottom: 2rem;
-	}
-
-	.footer-brand h3 {
-		color: var(--color-primary);
-		margin-bottom: 0.5rem;
-	}
-
-	.footer-brand p {
-		color: var(--color-gray-200);
-	}
-
-	.footer-links {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-		gap: 2rem;
-	}
-
-	.footer-section h4 {
-		margin-bottom: 1rem;
-		color: var(--color-white);
-	}
-
-	.footer-section a {
-		display: block;
-		color: var(--color-gray-200);
-		margin-bottom: 0.5rem;
-		transition: color 0.2s ease;
-	}
-
-	.footer-section a:hover {
-		color: var(--color-primary);
-	}
-
-	.footer-bottom {
-		border-top: 1px solid var(--color-gray-800);
-		padding-top: 1rem;
-		text-align: center;
-		color: var(--color-gray-200);
-	}
-
-	/* Responsive Design */
-	@media (max-width: 768px) {
-		.nav-links {
-			display: none;
-		}
-
-		.hero-content {
-			grid-template-columns: 1fr;
-			text-align: center;
-		}
-
-		.hero-title {
-			font-size: 2.5rem;
-		}
-
-		.features-grid {
-			grid-template-columns: 1fr;
-		}
-
-		.steps {
-			grid-template-columns: 1fr;
-		}
-
-		.footer-content {
-			grid-template-columns: 1fr;
-			text-align: center;
-		}
-
-		.hero-actions {
-			justify-content: center;
-		}
-	}
-</style>

@@ -1,145 +1,146 @@
 ---
+import Footer from '../components/Footer.astro';
 import Layout from '../layouts/Layout.astro';
 ---
 
 <Layout title="Terms of Service - Chatrat" description="Terms of service for Chatrat VSCode extension">
 	<!-- Navigation -->
-	<nav class="nav">
-		<div class="container">
-			<div class="nav-content">
+	<nav class="bg-white border-b border-gray-200 sticky top-0 z-50">
+		<div class="max-w-6xl mx-auto px-4 md:px-8">
+			<div class="flex justify-between items-center py-4">
 				<div class="nav-brand">
-					<a href="/"><h2>Chatrat</h2></a>
+					<a href="/" class="no-underline"><h2 class="text-pink-500 text-2xl font-bold tracking-widest">💬🐀<span class="tracking-normal">.</span>😹</h2></a>
 				</div>
-				<div class="nav-links">
-					<a href="/">Home</a>
-					<a href="/#features">Features</a>
-					<a href="/#how-it-works">How it Works</a>
-					<a href="/privacy">Privacy</a>
+				<div class="hidden md:flex gap-8 items-center">
+					<a href="/" class="font-medium text-gray-800 hover:text-pink-500 transition-colors duration-200">Home</a>
+					<a href="/#features" class="font-medium text-gray-800 hover:text-pink-500 transition-colors duration-200">Features</a>
+					<a href="/#how-it-works" class="font-medium text-gray-800 hover:text-pink-500 transition-colors duration-200">How it Works</a>
+					<a href="/privacy" class="font-medium text-gray-800 hover:text-pink-500 transition-colors duration-200">Privacy</a>
 				</div>
 			</div>
 		</div>
 	</nav>
 
 	<!-- Terms of Service Content -->
-	<main class="legal-page">
-		<div class="container">
-			<div class="legal-content">
-				<h1>Terms of Service</h1>
-				<p class="last-updated">Last updated: December 2024</p>
+	<main class="py-16 bg-yellow-50 min-h-screen">
+		<div class="max-w-4xl mx-auto px-4 md:px-8">
+			<div class="bg-white p-8 md:p-12 rounded-xl shadow-md">
+				<h1 class="text-4xl font-bold text-gray-800 mb-2">Terms of Service</h1>
+				<p class="text-gray-600 mb-8 italic">Last updated: August 2025</p>
 
-				<section>
-					<h2>1. Acceptance of Terms</h2>
-					<p>By installing, accessing, or using the Chatrat VSCode extension ("the Service"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, do not use the Service.</p>
+				<section class="mb-8">
+					<h2 class="text-2xl font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-pink-500">1. Acceptance of Terms</h2>
+					<p class="leading-relaxed text-gray-800">By installing, accessing, or using the Chatrat VSCode extension ("the Service"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, do not use the Service.</p>
 				</section>
 
-				<section>
-					<h2>2. Description of Service</h2>
-					<p>Chatrat is a VSCode extension that:</p>
-					<ul>
-						<li>Indexes your local codebase to create searchable metadata</li>
-						<li>Provides an MCP (Model Context Protocol) server for LLM integration</li>
-						<li>Enables file-based context sharing with AI language models</li>
-						<li>Operates entirely on your local machine</li>
+				<section class="mb-8">
+					<h2 class="text-2xl font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-pink-500">2. Description of Service</h2>
+					<p class="mb-4 leading-relaxed text-gray-800">Chatrat is a VSCode extension that:</p>
+					<ul class="mb-4 pl-6 space-y-2">
+						<li class="leading-relaxed text-gray-800">Indexes your local codebase to create searchable metadata</li>
+						<li class="leading-relaxed text-gray-800">Provides an MCP (Model Context Protocol) server for LLM integration</li>
+						<li class="leading-relaxed text-gray-800">Enables file-based context sharing with AI language models</li>
+						<li class="leading-relaxed text-gray-800">Operates entirely on your local machine</li>
 					</ul>
 				</section>
 
-				<section>
-					<h2>3. License and Usage Rights</h2>
-					<p>Subject to these Terms, we grant you a limited, non-exclusive, non-transferable license to use the Service for personal and commercial purposes. You may:</p>
-					<ul>
-						<li>Install and use the extension on multiple devices</li>
-						<li>Use the Service with any compatible LLM or AI service</li>
-						<li>Index and reference your own codebases</li>
+				<section class="mb-8">
+					<h2 class="text-2xl font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-pink-500">3. License and Usage Rights</h2>
+					<p class="mb-4 leading-relaxed text-gray-800">Subject to these Terms, we grant you a limited, non-exclusive, non-transferable license to use the Service for personal and commercial purposes. You may:</p>
+					<ul class="mb-4 pl-6 space-y-2">
+						<li class="leading-relaxed text-gray-800">Install and use the extension on multiple devices</li>
+						<li class="leading-relaxed text-gray-800">Use the Service with any compatible LLM or AI service</li>
+						<li class="leading-relaxed text-gray-800">Index and reference your own codebases</li>
 					</ul>
 				</section>
 
-				<section>
-					<h2>4. User Responsibilities</h2>
-					<p>You are responsible for:</p>
-					<ul>
-						<li>Ensuring you have the right to index and share code files you process</li>
-						<li>Complying with your organization's policies regarding code sharing</li>
-						<li>Maintaining the security of your development environment</li>
-						<li>Using the Service in compliance with applicable laws and regulations</li>
-						<li>Not attempting to reverse engineer, modify, or distribute the Service</li>
+				<section class="mb-8">
+					<h2 class="text-2xl font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-pink-500">4. User Responsibilities</h2>
+					<p class="mb-4 leading-relaxed text-gray-800">You are responsible for:</p>
+					<ul class="mb-4 pl-6 space-y-2">
+						<li class="leading-relaxed text-gray-800">Ensuring you have the right to index and share code files you process</li>
+						<li class="leading-relaxed text-gray-800">Complying with your organization's policies regarding code sharing</li>
+						<li class="leading-relaxed text-gray-800">Maintaining the security of your development environment</li>
+						<li class="leading-relaxed text-gray-800">Using the Service in compliance with applicable laws and regulations</li>
+						<li class="leading-relaxed text-gray-800">Not attempting to reverse engineer, modify, or distribute the Service</li>
 					</ul>
 				</section>
 
-				<section>
-					<h2>5. Prohibited Uses</h2>
-					<p>You may not use the Service to:</p>
-					<ul>
-						<li>Process code you do not have permission to access or share</li>
-						<li>Violate any intellectual property rights</li>
-						<li>Attempt to compromise the security of the extension or related systems</li>
-						<li>Use the Service for illegal activities</li>
-						<li>Redistribute or resell the Service</li>
+				<section class="mb-8">
+					<h2 class="text-2xl font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-pink-500">5. Prohibited Uses</h2>
+					<p class="mb-4 leading-relaxed text-gray-800">You may not use the Service to:</p>
+					<ul class="mb-4 pl-6 space-y-2">
+						<li class="leading-relaxed text-gray-800">Process code you do not have permission to access or share</li>
+						<li class="leading-relaxed text-gray-800">Violate any intellectual property rights</li>
+						<li class="leading-relaxed text-gray-800">Attempt to compromise the security of the extension or related systems</li>
+						<li class="leading-relaxed text-gray-800">Use the Service for illegal activities</li>
+						<li class="leading-relaxed text-gray-800">Redistribute or resell the Service</li>
 					</ul>
 				</section>
 
-				<section>
-					<h2>6. Privacy and Data</h2>
-					<p>Your privacy is important to us. Please review our Privacy Policy, which explains how we handle your information. Key points:</p>
-					<ul>
-						<li>All code processing happens locally on your machine</li>
-						<li>We do not store or transmit your code to our servers</li>
-						<li>You control what data is shared through the MCP protocol</li>
+				<section class="mb-8">
+					<h2 class="text-2xl font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-pink-500">6. Privacy and Data</h2>
+					<p class="mb-4 leading-relaxed text-gray-800">Your privacy is important to us. Please review our Privacy Policy, which explains how we handle your information. Key points:</p>
+					<ul class="mb-4 pl-6 space-y-2">
+						<li class="leading-relaxed text-gray-800">All code processing happens locally on your machine</li>
+						<li class="leading-relaxed text-gray-800">We do not store or transmit your code to our servers</li>
+						<li class="leading-relaxed text-gray-800">You control what data is shared through the MCP protocol</li>
 					</ul>
 				</section>
 
-				<section>
-					<h2>7. Disclaimers and Limitations</h2>
-					<p>THE SERVICE IS PROVIDED "AS IS" WITHOUT WARRANTIES OF ANY KIND. WE DISCLAIM ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING:</p>
-					<ul>
-						<li>Warranties of merchantability and fitness for a particular purpose</li>
-						<li>Warranties regarding accuracy, reliability, or completeness</li>
-						<li>Warranties that the Service will be uninterrupted or error-free</li>
+				<section class="mb-8">
+					<h2 class="text-2xl font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-pink-500">7. Disclaimers and Limitations</h2>
+					<p class="mb-4 leading-relaxed text-gray-800">THE SERVICE IS PROVIDED "AS IS" WITHOUT WARRANTIES OF ANY KIND. WE DISCLAIM ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING:</p>
+					<ul class="mb-4 pl-6 space-y-2">
+						<li class="leading-relaxed text-gray-800">Warranties of merchantability and fitness for a particular purpose</li>
+						<li class="leading-relaxed text-gray-800">Warranties regarding accuracy, reliability, or completeness</li>
+						<li class="leading-relaxed text-gray-800">Warranties that the Service will be uninterrupted or error-free</li>
 					</ul>
 				</section>
 
-				<section>
-					<h2>8. Limitation of Liability</h2>
-					<p>TO THE MAXIMUM EXTENT PERMITTED BY LAW, WE SHALL NOT BE LIABLE FOR:</p>
-					<ul>
-						<li>Any indirect, incidental, special, or consequential damages</li>
-						<li>Loss of data, profits, or business opportunities</li>
-						<li>Damages arising from your use of third-party LLM services</li>
-						<li>Any damages exceeding $100 in the aggregate</li>
+				<section class="mb-8">
+					<h2 class="text-2xl font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-pink-500">8. Limitation of Liability</h2>
+					<p class="mb-4 leading-relaxed text-gray-800">TO THE MAXIMUM EXTENT PERMITTED BY LAW, WE SHALL NOT BE LIABLE FOR:</p>
+					<ul class="mb-4 pl-6 space-y-2">
+						<li class="leading-relaxed text-gray-800">Any indirect, incidental, special, or consequential damages</li>
+						<li class="leading-relaxed text-gray-800">Loss of data, profits, or business opportunities</li>
+						<li class="leading-relaxed text-gray-800">Damages arising from your use of third-party LLM services</li>
+						<li class="leading-relaxed text-gray-800">Any damages exceeding $100 in the aggregate</li>
 					</ul>
 				</section>
 
-				<section>
-					<h2>9. Updates and Modifications</h2>
-					<p>We may:</p>
-					<ul>
-						<li>Update the Service to add features, fix bugs, or improve performance</li>
-						<li>Modify these Terms with 30 days' notice</li>
-						<li>Discontinue the Service with reasonable notice</li>
+				<section class="mb-8">
+					<h2 class="text-2xl font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-pink-500">9. Updates and Modifications</h2>
+					<p class="mb-4 leading-relaxed text-gray-800">We may:</p>
+					<ul class="mb-4 pl-6 space-y-2">
+						<li class="leading-relaxed text-gray-800">Update the Service to add features, fix bugs, or improve performance</li>
+						<li class="leading-relaxed text-gray-800">Modify these Terms with 30 days' notice</li>
+						<li class="leading-relaxed text-gray-800">Discontinue the Service with reasonable notice</li>
 					</ul>
-					<p>Continued use after changes constitutes acceptance of the updated Terms.</p>
+					<p class="leading-relaxed text-gray-800">Continued use after changes constitutes acceptance of the updated Terms.</p>
 				</section>
 
-				<section>
-					<h2>10. Termination</h2>
-					<p>You may stop using the Service at any time by uninstalling the extension. We may terminate your access if you violate these Terms. Upon termination:</p>
-					<ul>
-						<li>Your license to use the Service ends immediately</li>
-						<li>You should uninstall the extension and delete any local data</li>
-						<li>Provisions regarding liability and disputes will survive termination</li>
+				<section class="mb-8">
+					<h2 class="text-2xl font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-pink-500">10. Termination</h2>
+					<p class="mb-4 leading-relaxed text-gray-800">You may stop using the Service at any time by uninstalling the extension. We may terminate your access if you violate these Terms. Upon termination:</p>
+					<ul class="mb-4 pl-6 space-y-2">
+						<li class="leading-relaxed text-gray-800">Your license to use the Service ends immediately</li>
+						<li class="leading-relaxed text-gray-800">You should uninstall the extension and delete any local data</li>
+						<li class="leading-relaxed text-gray-800">Provisions regarding liability and disputes will survive termination</li>
 					</ul>
 				</section>
 
-				<section>
-					<h2>11. Governing Law</h2>
-					<p>These Terms are governed by the laws of [Your Jurisdiction]. Any disputes will be resolved in the courts of [Your Jurisdiction].</p>
+				<section class="mb-8">
+					<h2 class="text-2xl font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-pink-500">11. Governing Law</h2>
+					<p class="leading-relaxed text-gray-800">These Terms are governed by the laws of [Your Jurisdiction]. Any disputes will be resolved in the courts of [Your Jurisdiction].</p>
 				</section>
 
-				<section>
-					<h2>12. Contact Information</h2>
-					<p>For questions about these Terms, please contact us at:</p>
-					<ul>
-						<li>Email: legal@repo-mcp.com</li>
-						<li>GitHub: <a href="https://github.com/your-username/repo-mcp">github.com/your-username/repo-mcp</a></li>
+				<section class="mb-8">
+					<h2 class="text-2xl font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-pink-500">12. Contact Information</h2>
+					<p class="mb-4 leading-relaxed text-gray-800">For questions about these Terms, please contact us at:</p>
+					<ul class="mb-4 pl-6 space-y-2">
+						<li class="leading-relaxed text-gray-800">Email: grep@chatrat.cat</li>
+						<li class="leading-relaxed text-gray-800">GitHub: <a href="https://github.com/alexjamesgodfrey/chatrat" class="text-pink-500 underline hover:text-pink-600">github.com/alexjamesgodfrey/chatrat</a></li>
 					</ul>
 				</section>
 			</div>
@@ -147,214 +148,11 @@ import Layout from '../layouts/Layout.astro';
 	</main>
 
 	<!-- Footer -->
-	<footer class="footer">
-		<div class="container">
-			<div class="footer-content">
-				<div class="footer-brand">
-					<h3>Chatrat</h3>
-					<p>Smart codebase context for LLM conversations</p>
-				</div>
-				<div class="footer-links">
-					<div class="footer-section">
-						<h4>Product</h4>
-						<a href="/#features">Features</a>
-						<a href="/#how-it-works">How it Works</a>
-						<a href="https://github.com/your-username/repo-mcp">GitHub</a>
-					</div>
-					<div class="footer-section">
-						<h4>Legal</h4>
-						<a href="/privacy">Privacy Policy</a>
-						<a href="/terms">Terms of Service</a>
-					</div>
-				</div>
-			</div>
-			<div class="footer-bottom">
-				<p>&copy; 2024 Chatrat. All rights reserved.</p>
-			</div>
-		</div>
-	</footer>
+	<Footer
+		siteName="Chatrat"
+		githubUrl="https://github.com/serviettellc/chatrat"
+		email="grep@chatrat.cat"
+	/>
 </Layout>
 
-<style>
-	/* Navigation */
-	.nav {
-		background: var(--color-white);
-		border-bottom: 1px solid var(--color-gray-200);
-		position: sticky;
-		top: 0;
-		z-index: 50;
-	}
 
-	.nav-content {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		padding: 1rem 0;
-	}
-
-	.nav-brand a {
-		text-decoration: none;
-	}
-
-	.nav-brand h2 {
-		color: var(--color-primary);
-		font-size: 1.5rem;
-		font-weight: 700;
-	}
-
-	.nav-links {
-		display: flex;
-		gap: 2rem;
-		align-items: center;
-	}
-
-	.nav-links a {
-		font-weight: 500;
-		color: var(--color-text);
-		transition: color 0.2s ease;
-	}
-
-	.nav-links a:hover {
-		color: var(--color-primary);
-	}
-
-	/* Legal Page */
-	.legal-page {
-		padding: 4rem 0;
-		background: var(--color-background);
-		min-height: 70vh;
-	}
-
-	.legal-content {
-		max-width: 800px;
-		margin: 0 auto;
-		background: var(--color-white);
-		padding: 3rem;
-		border-radius: var(--border-radius-lg);
-		box-shadow: var(--shadow-md);
-	}
-
-	.legal-content h1 {
-		font-size: 2.5rem;
-		color: var(--color-text);
-		margin-bottom: 0.5rem;
-	}
-
-	.last-updated {
-		color: var(--color-text-light);
-		margin-bottom: 2rem;
-		font-style: italic;
-	}
-
-	.legal-content section {
-		margin-bottom: 2rem;
-	}
-
-	.legal-content h2 {
-		font-size: 1.5rem;
-		color: var(--color-text);
-		margin-bottom: 1rem;
-		border-bottom: 2px solid var(--color-primary);
-		padding-bottom: 0.5rem;
-	}
-
-	.legal-content p {
-		margin-bottom: 1rem;
-		line-height: 1.6;
-		color: var(--color-text);
-	}
-
-	.legal-content ul {
-		margin-bottom: 1rem;
-		padding-left: 1.5rem;
-	}
-
-	.legal-content li {
-		margin-bottom: 0.5rem;
-		line-height: 1.6;
-		color: var(--color-text);
-	}
-
-	.legal-content a {
-		color: var(--color-primary);
-		text-decoration: underline;
-	}
-
-	.legal-content a:hover {
-		color: var(--color-primary-dark);
-	}
-
-	/* Footer */
-	.footer {
-		background: var(--color-gray-900);
-		color: var(--color-white);
-		padding: 3rem 0 1rem;
-	}
-
-	.footer-content {
-		display: grid;
-		grid-template-columns: 1fr 2fr;
-		gap: 3rem;
-		margin-bottom: 2rem;
-	}
-
-	.footer-brand h3 {
-		color: var(--color-primary);
-		margin-bottom: 0.5rem;
-	}
-
-	.footer-brand p {
-		color: var(--color-gray-200);
-	}
-
-	.footer-links {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-		gap: 2rem;
-	}
-
-	.footer-section h4 {
-		margin-bottom: 1rem;
-		color: var(--color-white);
-	}
-
-	.footer-section a {
-		display: block;
-		color: var(--color-gray-200);
-		margin-bottom: 0.5rem;
-		transition: color 0.2s ease;
-		text-decoration: none;
-	}
-
-	.footer-section a:hover {
-		color: var(--color-primary);
-	}
-
-	.footer-bottom {
-		border-top: 1px solid var(--color-gray-800);
-		padding-top: 1rem;
-		text-align: center;
-		color: var(--color-gray-200);
-	}
-
-	/* Responsive Design */
-	@media (max-width: 768px) {
-		.nav-links {
-			display: none;
-		}
-
-		.legal-content {
-			padding: 2rem 1rem;
-			margin: 0 1rem;
-		}
-
-		.legal-content h1 {
-			font-size: 2rem;
-		}
-
-		.footer-content {
-			grid-template-columns: 1fr;
-			text-align: center;
-		}
-	}
-</style>

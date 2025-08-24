@@ -1,0 +1,57 @@
+---
+interface Props {
+  siteName?: string;
+  tagline?: string;
+  email?: string;
+  githubUrl?: string;
+  featuresHref?: string;
+  howItWorksHref?: string;
+  privacyHref?: string;
+  termsHref?: string;
+}
+
+const {
+  siteName = 'Chatrat',
+  tagline = 'Smart codebase context for LLM conversations',
+  email = 'grep@chatrat.cat',
+  githubUrl = 'https://github.com/alexjamesgodfrey/chatrat',
+  featuresHref = '/#features',
+  howItWorksHref = '/#how-it-works',
+  privacyHref = '/privacy',
+  termsHref = '/terms'
+} = Astro.props;
+
+const year = new Date().getFullYear();
+---
+
+<footer class="bg-gray-900 text-white py-12">
+  <div class="max-w-6xl mx-auto px-4 md:px-8">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-12 mb-8">
+      <div>
+        <h3 class="text-pink-500 text-xl font-bold mb-2">{siteName}</h3>
+        <p class="text-gray-300">{tagline}</p>
+      </div>
+      <div>
+        <h4 class="font-semibold mb-4 text-white">Product</h4>
+        <div class="space-y-2">
+          <a href={featuresHref} class="block text-gray-300 hover:text-pink-500 transition-colors duration-200">Features</a>
+          <a href={howItWorksHref} class="block text-gray-300 hover:text-pink-500 transition-colors duration-200">How it Works</a>
+          <a href={githubUrl} class="block text-gray-300 hover:text-pink-500 transition-colors duration-200">GitHub</a>
+        </div>
+      </div>
+      <div>
+        <h4 class="font-semibold mb-4 text-white">Legal</h4>
+        <div class="space-y-2">
+          <a href={privacyHref} class="block text-gray-300 hover:text-pink-500 transition-colors duration-200">Privacy Policy</a>
+          <a href={termsHref} class="block text-gray-300 hover:text-pink-500 transition-colors duration-200">Terms of Service</a>
+        </div>
+      </div>
+    </div>
+    <div class="border-t border-gray-800 pt-4 text-center">
+      <p class="text-gray-300">
+        &copy; {year} {siteName}. Contact us at
+        <a href={`mailto:${email}`} class="text-pink-500 hover:text-pink-400 transition-colors duration-200">{email}</a>
+      </p>
+    </div>
+  </div>
+</footer>
