@@ -156,60 +156,68 @@ export const templates: AgentDBTemplate = {
     GROUP BY r.name, extension
     ORDER BY file_count DESC;
 
-    -- Migration 7: Create open_files table to track currently open files
-    CREATE TABLE IF NOT EXISTS open_files (
-        repository_id TEXT NOT NULL,                       -- FK to repositories.id
-        file_path TEXT NOT NULL,                           -- FK to repository_files.file_path
-        is_focused BOOLEAN DEFAULT 0,                      -- Whether this file is currently focused
-        opened_at DATETIME DEFAULT CURRENT_TIMESTAMP,      -- When the file was opened
-        PRIMARY KEY(repository_id, file_path),
-        FOREIGN KEY (repository_id) REFERENCES repositories(id) ON DELETE CASCADE,
-        FOREIGN KEY (repository_id, file_path) REFERENCES repository_files(repository_id, file_path) ON DELETE CASCADE
-    );
+    -- Migration 7: Create open_files table to track currently open files + diagnostics
+        PRAGMA foreign_keys = ON;
 
-    -- Create indexes for performance
-    CREATE INDEX IF NOT EXISTS idx_open_files_focused 
-    ON open_files(repository_id, is_focused);
+        CREATE TABLE IF NOT EXISTS open_files (
+            repository_id   TEXT NOT NULL,                       -- FK to repositories.id
+            file_path       TEXT NOT NULL,                       -- FK to repository_files.file_path (scoped by repo)
+            diagnostics     TEXT DEFAULT NULL,                   -- Optional serialized diagnostics (JSON or other)
+            is_focused      BOOLEAN DEFAULT 0,                   -- Whether this file is currently focused (0/1)
+            opened_at       DATETIME DEFAULT CURRENT_TIMESTAMP,  -- When the file was opened
+            PRIMARY KEY (repository_id, file_path),
+            FOREIGN KEY (repository_id) REFERENCES repositories(id) ON DELETE CASCADE,
+            FOREIGN KEY (repository_id, file_path) REFERENCES repository_files(repository_id, file_path) ON DELETE CASCADE
+        );
 
-    -- TRIGGER: When inserting a new open file with is_focused=1, 
-    -- automatically unfocus any other file in the same repository
-    -- This ensures only one file can be focused at a time per repository
-    CREATE TRIGGER IF NOT EXISTS ensure_single_focus 
-    BEFORE INSERT ON open_files 
-    WHEN NEW.is_focused = 1
-    BEGIN
-        UPDATE open_files 
-        SET is_focused = 0 
-        WHERE repository_id = NEW.repository_id AND is_focused = 1;
-    END;
+        -- Create indexes for performance
+        CREATE INDEX IF NOT EXISTS idx_open_files_focused
+        ON open_files(repository_id, is_focused);
 
-    -- TRIGGER: When updating an open file to set is_focused=1,
-    -- automatically unfocus any other file in the same repository
-    -- This maintains the single-focus constraint during updates
-    CREATE TRIGGER IF NOT EXISTS ensure_single_focus_update 
-    BEFORE UPDATE ON open_files 
-    WHEN NEW.is_focused = 1 AND OLD.is_focused = 0
-    BEGIN
-        UPDATE open_files 
-        SET is_focused = 0 
-        WHERE repository_id = NEW.repository_id 
-        AND file_path != NEW.file_path
-        AND is_focused = 1;
-    END;
+        -- TRIGGER: When inserting a new open file with is_focused=1,
+        -- automatically unfocus any other file in the same repository
+        -- Ensures only one file can be focused at a time per repository
+        CREATE TRIGGER IF NOT EXISTS ensure_single_focus
+        BEFORE INSERT ON open_files
+        WHEN NEW.is_focused = 1
+        BEGIN
+            UPDATE open_files
+            SET is_focused = 0
+            WHERE repository_id = NEW.repository_id AND is_focused = 1;
+        END;
 
-    -- Create a view to easily see open files with their details
-    CREATE VIEW IF NOT EXISTS open_files_detail AS
-    SELECT 
-        of.repository_id,
-        r.name as repository_name,
-        of.file_path,
-        rf.size as file_size,
-        of.is_focused,
-        of.opened_at
-    FROM open_files of
-    JOIN repositories r ON r.id = of.repository_id
-    JOIN repository_files rf ON rf.repository_id = of.repository_id AND rf.file_path = of.file_path
-    ORDER BY of.is_focused DESC, of.opened_at DESC;
+        -- TRIGGER: When updating an open file to set is_focused=1,
+        -- automatically unfocus any other file in the same repository
+        -- Maintains the single-focus constraint during updates
+        CREATE TRIGGER IF NOT EXISTS ensure_single_focus_update
+        BEFORE UPDATE ON open_files
+        WHEN NEW.is_focused = 1 AND OLD.is_focused = 0
+        BEGIN
+            UPDATE open_files
+            SET is_focused = 0
+            WHERE repository_id = NEW.repository_id
+            AND file_path != NEW.file_path
+            AND is_focused = 1;
+        END;
+
+        -- Recreate the view to include diagnostics
+        DROP VIEW IF EXISTS open_files_detail;
+        CREATE VIEW open_files_detail AS
+        SELECT
+            of.repository_id,
+            r.name AS repository_name,
+            of.file_path,
+            rf.size AS file_size,
+            of.is_focused,
+            of.opened_at,
+            of.diagnostics
+        FROM open_files AS of
+        JOIN repositories AS r
+        ON r.id = of.repository_id
+        JOIN repository_files AS rf
+        ON rf.repository_id = of.repository_id
+        AND rf.file_path     = of.file_path
+        ORDER BY of.is_focused DESC, of.opened_at DESC;
         `,
   ],
 } as const;
