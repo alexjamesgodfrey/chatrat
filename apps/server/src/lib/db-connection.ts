@@ -1,6 +1,7 @@
 import DatabaseService, {
   DatabaseConnection,
   DatabaseType as AgentDBDatabaseType,
+  McpSlugResponse,
 } from "@agentdb/sdk";
 import { Pool } from "pg";
 import { AuthenticatedRequest, DatabaseProvider } from "../types";
@@ -52,7 +53,7 @@ class AgentDBDatabase implements DatabaseProvider {
     return await this.connection.execute(statements);
   }
 
-  async createMcpSlug(): Promise<string> {
+  async createMcpSlug(): Promise<McpSlugResponse> {
     if (!this.connection) {
       throw new Error("AgentDB connection not initialized");
     }
@@ -68,7 +69,7 @@ class AgentDBDatabase implements DatabaseProvider {
       throw new Error("Failed to create MCP slug");
     }
 
-    return response.slug;
+    return response;
   }
 
   async seedDatabaseIfNecessary(): Promise<void> {
@@ -83,13 +84,13 @@ class AgentDBDatabase implements DatabaseProvider {
     } catch (error) {
       if (error instanceof ValidationError) {
         return;
-      } 
+      }
     }
   }
 }
 
 class PostgresDatabase implements DatabaseProvider {
-  createMcpSlug(): Promise<string> {
+  createMcpSlug(): Promise<McpSlugResponse> {
     throw new Error("Method not implemented.");
   }
   seedDatabaseIfNecessary(): Promise<void> {

@@ -4,7 +4,7 @@ import ignore from "ignore";
 import * as path from "path";
 import * as vscode from "vscode";
 import { AuthService } from "./authService";
-import { ProxyService } from "./proxyService";
+import { McpSlugResult, ProxyService } from "./proxyService";
 
 const OUTPUT_CHANNEL_NAME = "Chatrat";
 const theOneAndOnlyOutputChannel = vscode.window.createOutputChannel(OUTPUT_CHANNEL_NAME);
@@ -218,11 +218,7 @@ async function createAndStoreMcpSlug(context: vscode.ExtensionContext) {
   try {
     await ensureDatabase(context);
 
-    const slugResponse = await proxyService.createMcpSlug();
-
-    if (!slugResponse?.shortUrl) {
-      throw new Error("Failed to create MCP slug: no URL returned");
-    }
+    const slugResponse: McpSlugResult = await proxyService.createMcpSlug();
 
     vscode.window
       .showInformationMessage(

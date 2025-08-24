@@ -121,7 +121,8 @@ export class ProxyService {
       const response = await this.httpClient.post(
         "/api/agentdb/create-mcp-slug"
       );
-      return response.data.slug;
+      
+      return response.data;
     } catch (error) {
       console.error("Create MCP slug error:", error);
       throw new Error(
