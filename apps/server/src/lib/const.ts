@@ -16,3 +16,6 @@ export const DEFAULT_AGENTDB_TOKEN = process.env.DEFAULT_AGENTDB_TOKEN!;
 if (!DEFAULT_AGENTDB_TOKEN) {
   throw new Error("DEFAULT_AGENTDB_TOKEN is not set");
 }
+
+
+export const CHATRAT_TEMPLATE_NAME = process.env.CHATRAT_TEMPLATE_NAME || "chatrat-template";

@@ -1,4 +1,4 @@
-import DatabaseService, { DatabaseConnection } from "@agentdb/sdk";
+import DatabaseService, { DatabaseConnection, DatabaseType as AgentDBDatabaseType } from "@agentdb/sdk";
 import { Pool } from "pg";
 import { AuthenticatedRequest, DatabaseProvider } from "../types";
 import {
@@ -6,6 +6,7 @@ import {
   AGENTDB_CLIENT_DEBUG,
   DEFAULT_AGENTDB_DB_API_KEY,
   DEFAULT_AGENTDB_TOKEN,
+  CHATRAT_TEMPLATE_NAME,
 } from "./const";
 import { SqlStatement } from "@chatrat/types";
 import { validateAgentDbString } from "./validate-db";
@@ -16,6 +17,7 @@ class AgentDBDatabase implements DatabaseProvider {
   private dbName: string;
   private client: DatabaseService | null = null;
   private connection: DatabaseConnection | null = null;
+  private dbType: AgentDBDatabaseType = "sqlite";
 
   constructor(
     dbName: string,
@@ -29,7 +31,6 @@ class AgentDBDatabase implements DatabaseProvider {
   }
 
   async initialize(): Promise<void> {
-    const dbType = "sqlite";
 
     this.client = new DatabaseService(
       AGENTDB_BASE_URL,
@@ -37,7 +38,7 @@ class AgentDBDatabase implements DatabaseProvider {
       AGENTDB_CLIENT_DEBUG
     );
 
-    this.connection = this.client.connect(this.token, this.dbName, dbType);
+    this.connection = this.client.connect(this.token, this.dbName, this.dbType);
   }
 
   async executeSql(statements: SqlStatement[]): Promise<void> {
@@ -57,8 +58,7 @@ class AgentDBDatabase implements DatabaseProvider {
       token: this.token,
       dbType: "sqlite",
       dbName: this.dbName,
-      // eli add template
-      // template: ,
+      template: CHATRAT_TEMPLATE_NAME,
     });
 
     if (!response) {
@@ -69,7 +69,10 @@ class AgentDBDatabase implements DatabaseProvider {
   }
 
   async seedDatabaseIfNecessary(): Promise<void> {
-    throw new Error("Method not implemented.");
+    const templateNames = [CHATRAT_TEMPLATE_NAME];
+    this.client?._createDatabaseWithTemplates(
+      this.token, this.dbName, this.dbType, templateNames
+    )
   }
 }
 

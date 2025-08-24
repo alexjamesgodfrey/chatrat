@@ -10,8 +10,8 @@
 > esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node --sourcemap
 
 [1G[0K
-  [37mout/[0m[1mextension.js[0m      [36m466.0kb[0m
-  [37mout/[0m[1mextension.js.map[0m  [36m811.5kb[0m
+  [37mout/[0m[1mextension.js[0m      [36m465.0kb[0m
+  [37mout/[0m[1mextension.js.map[0m  [36m809.8kb[0m
 
 ⚡ [32mDone in 17ms[0m
 [1G[0K⠙[1G[0K
