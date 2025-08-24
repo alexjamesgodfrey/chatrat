@@ -1,0 +1,17 @@
+{
+  "extends": "../../packages/tsconfig/base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "target": "ES2020",
+    "rootDir": "../..",
+    "baseUrl": ".",
+    "paths": {
+      "@chatrat/config/*": ["./src/*"],
+      "@chatrat/types": ["../types/src/index"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules"]
+}

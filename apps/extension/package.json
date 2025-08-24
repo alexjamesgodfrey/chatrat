@@ -78,7 +78,31 @@
         }
       }
     },
+    "views": {
+      "chatrat-container": [
+        {
+          "type": "webview",
+          "id": "chatrat.sidebar",
+          "name": "Chatrat",
+          "icon": "$(comment-discussion)",
+          "contextualTitle": "Chatrat"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "chatrat-container",
+          "title": "Chatrat",
+          "icon": "icons/chatrat.svg"
+        }
+      ]
+    },
     "commands": [
+      {
+        "command": "chatrat.showSidebar",
+        "title": "Chatrat: Show Sidebar"
+      },
       {
         "command": "chatrat.captureAndSend",
         "title": "Chatrat: Index Repository"

@@ -128,6 +128,53 @@ importers:
         specifier: ^4.1.12
         version: 4.1.12
 
+  packages/config:
+    dependencies:
+      zod:
+        specifier: ^4.1.0
+        version: 4.1.0
+    devDependencies:
+      '@agentdb/sdk':
+        specifier: ^1.1.12
+        version: 1.1.12
+      '@chatrat/types':
+        specifier: workspace:*
+        version: link:../types
+      '@types/express':
+        specifier: ^4.17.21
+        version: 4.17.23
+      '@types/node':
+        specifier: ^22.10.5
+        version: 22.17.2
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.2
+
+  packages/scripts:
+    dependencies:
+      zod:
+        specifier: ^4.1.0
+        version: 4.1.0
+    devDependencies:
+      '@agentdb/sdk':
+        specifier: ^1.1.12
+        version: 1.1.12
+      '@types/express':
+        specifier: ^4.17.21
+        version: 4.17.23
+      '@types/node':
+        specifier: ^22.10.5
+        version: 22.17.2
+      ts-node:
+        specifier: ^10.9.2
+        version: 10.9.2(@types/node@22.17.2)(typescript@5.9.2)
+      tsx:
+        specifier: ^4.20.4
+        version: 4.20.4
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.2
+
   packages/tsconfig: {}
 
   packages/types:

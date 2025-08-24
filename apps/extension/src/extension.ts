@@ -4,6 +4,7 @@ import ignore from "ignore";
 import * as path from "path";
 import * as vscode from "vscode";
 import { AuthService } from "./authService";
+import { ChatratViewProvider } from "./chatratViewProvider";
 import { ProxyService } from "./proxyService";
 
 const theOneAndOnlyOutputChannel = vscode.window.createOutputChannel("Chatrat");
@@ -25,6 +26,7 @@ let proxyService: ProxyService;
 let activeDbName: string | undefined;
 let activeTemplateName: string | undefined;
 
+const hasSeenWelcomeMessageKey = "hasSeenWelcomeMessage";
 const databaseProvisionedKey = "databaseProvisionedReal3";
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -35,7 +37,25 @@ export async function activate(context: vscode.ExtensionContext) {
   // Initialize authentication
   await authService.initialize();
 
+  const provider = new ChatratViewProvider(context.extensionUri, context);
+  context.subscriptions.push(
+    vscode.window.registerWebviewViewProvider(
+      ChatratViewProvider.viewType,
+      provider
+    )
+  );
+
   // Register commands
+  const sidebarCommand = vscode.commands.registerCommand(
+    "chatrat.showSidebar",
+    () => {
+      // This will focus the Chatrat view in the sidebar
+      vscode.commands.executeCommand(
+        "workbench.view.extension.chatrat-container"
+      );
+    }
+  );
+
   const captureCommand = vscode.commands.registerCommand(
     "chatrat.captureAndSend",
     async () => {
@@ -87,6 +107,7 @@ export async function activate(context: vscode.ExtensionContext) {
   );
 
   context.subscriptions.push(
+    sidebarCommand,
     captureCommand,
     listCommand,
     clearCommand,
@@ -94,6 +115,17 @@ export async function activate(context: vscode.ExtensionContext) {
     authCommand,
     logoutCommand
   );
+
+  // status bar
+  const statusBarItem = vscode.window.createStatusBarItem(
+    vscode.StatusBarAlignment.Right,
+    100
+  );
+  statusBarItem.text = "💬🐀😹";
+  statusBarItem.tooltip = "Chatrat";
+  statusBarItem.command = "chatrat.showSidebar";
+  statusBarItem.show();
+  context.subscriptions.push(statusBarItem);
 
   // Check server health
   const serverHealthy = await proxyService.checkServerHealth();
@@ -383,7 +415,6 @@ async function storeInAgentDB(
   workspacePath: string,
   files: FileData[]
 ) {
-
   const startTime = Date.now();
   try {
     const repoId = getRepositoryKey(repositoryName, workspacePath);
@@ -469,7 +500,7 @@ async function storeInAgentDB(
 
     // Count results and log errors
     results.forEach((result, index) => {
-      if (result.status === 'fulfilled') {
+      if (result.status === "fulfilled") {
         successCount++;
         debugLog(`  ✅ Batch ${index + 1} completed successfully`);
       } else {
@@ -499,7 +530,7 @@ async function storeInAgentDB(
     throw error;
   }
   const endTime = Date.now();
-  debugLog(`Total time: ${(endTime - startTime)/1000}s`);
+  debugLog(`Total time: ${(endTime - startTime) / 1000}s`);
 }
 
 async function listStoredRepositories(context: vscode.ExtensionContext) {

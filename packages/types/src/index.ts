@@ -12,3 +12,9 @@ export const executeSqlSchema = z.object({
 });
 export type ExecuteSqlSchema = z.infer<typeof executeSqlSchema>;
 export type SqlResults = ExecuteResult;
+
+export interface AgentDBTemplate {
+  name: string;
+  description: string;
+  migrations: string[];
+}
