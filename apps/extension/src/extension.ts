@@ -89,6 +89,46 @@ export async function activate(context: vscode.ExtensionContext) {
     }
   );
 
+
+  const focusWatcher = vscode.window.onDidChangeActiveTextEditor(
+    async (editor) => {
+      if (!editor) return;
+
+      // check if file path is in the repo/workspace
+      const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+      if (!workspaceFolder) return;
+      if (!editor.document.uri.fsPath.startsWith(workspaceFolder.uri.fsPath)) {
+        return;
+      }
+      if (!context.globalState.get(databaseProvisionedKey)) {
+        return;
+      }
+
+      const repositoryName = path.basename(workspaceFolder.uri.fsPath);
+      const repoId = getRepositoryKey(
+        repositoryName,
+        workspaceFolder.uri.fsPath
+      );
+      const relativePath = path.relative(
+        workspaceFolder.uri.fsPath,
+        editor.document.uri.fsPath
+      );
+      const repoRelativePath = path
+        .join(repositoryName, relativePath)
+        .replace(/\\/g, "/");
+
+      await dataTransfer.upsertFocusedFile(
+        proxyService,
+        repoId,
+        repoRelativePath
+      );
+
+      debugLog("Active editor changed: " + editor.document.fileName);
+      debugLog("Full path: " + editor.document.uri.fsPath);
+    }
+  );
+  
+
   // Register commands
   const sidebarCommand = vscode.commands.registerCommand(
     "chatrat.showSidebar",
@@ -158,7 +198,8 @@ export async function activate(context: vscode.ExtensionContext) {
     mcpCommand,
     authCommand,
     logoutCommand,
-    fileWatcher
+    fileWatcher,
+    focusWatcher
   );
 
   // status bar

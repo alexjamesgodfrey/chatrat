@@ -134,3 +134,20 @@ export async function clearAllRepositoryData(
     },
   ]);
 }
+
+export async function upsertFocusedFile(
+  proxyService: ProxyService,
+  repoId: string,
+  filePath: string
+): Promise<void> {
+  await proxyService.executeQuery([
+    {
+      sql: `INSERT INTO open_files (repository_id, file_path, is_focused, opened_at)
+                VALUES (?, ?, 1, CURRENT_TIMESTAMP)
+                ON CONFLICT(repository_id, file_path) DO UPDATE SET
+                is_focused = 1,
+                opened_at = CURRENT_TIMESTAMP`,
+      params: [repoId, filePath],
+    },
+  ]);
+}
