@@ -4,20 +4,17 @@ import ignore from "ignore";
 import * as path from "path";
 import * as vscode from "vscode";
 import { AuthService } from "./authService";
+import * as dataTransfer from "./dataTransfer";
+import { FileData } from "./dataTransfer";
 import { McpSlugResult, ProxyService } from "./proxyService";
 
 const OUTPUT_CHANNEL_NAME = "Chatrat";
-const theOneAndOnlyOutputChannel = vscode.window.createOutputChannel(OUTPUT_CHANNEL_NAME);
+const theOneAndOnlyOutputChannel =
+  vscode.window.createOutputChannel(OUTPUT_CHANNEL_NAME);
 theOneAndOnlyOutputChannel.show(true);
 
 function debugLog(...args: any[]) {
   theOneAndOnlyOutputChannel.appendLine(args.join(" "));
-}
-
-interface FileData {
-  path: string;
-  content: string;
-  size: number;
 }
 
 // Global services
@@ -37,41 +34,51 @@ export async function activate(context: vscode.ExtensionContext) {
   await authService.initialize();
 
   // Set up file save event handler
-  const fileWatcher = vscode.workspace.onDidSaveTextDocument(async (document) => {
-    debugLog("Saved: " + document.fileName);
-    debugLog("Full path: " + document.uri.fsPath);
+  const fileWatcher = vscode.workspace.onDidSaveTextDocument(
+    async (document) => {
+      debugLog("Saved: " + document.fileName);
+      debugLog("Full path: " + document.uri.fsPath);
 
-    if (!context.globalState.get(databaseProvisionedKey)) {
-      return;
+      if (!context.globalState.get(databaseProvisionedKey)) {
+        return;
+      }
+
+      try {
+        const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+        if (!workspaceFolder) return;
+
+        const repositoryName = path.basename(workspaceFolder.uri.fsPath);
+        const repoId = getRepositoryKey(
+          repositoryName,
+          workspaceFolder.uri.fsPath
+        );
+        const relativePath = path.relative(
+          workspaceFolder.uri.fsPath,
+          document.uri.fsPath
+        );
+        const repoRelativePath = path
+          .join(repositoryName, relativePath)
+          .replace(/\\/g, "/");
+
+        const content = document.getText();
+        const size = Buffer.byteLength(content, "utf8");
+
+        await dataTransfer.upsertRepositoryFile(
+          proxyService,
+          repoId,
+          repoRelativePath,
+          content,
+          size
+        );
+
+        debugLog(`Updated file in database: ${repoRelativePath}`);
+      } catch (error: any) {
+        debugLog(
+          `Failed to update file in database: ${error.message || error}`
+        );
+      }
     }
-
-    try {
-      const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-      if (!workspaceFolder) return;
-
-      const repositoryName = path.basename(workspaceFolder.uri.fsPath);
-      const repoId = getRepositoryKey(repositoryName, workspaceFolder.uri.fsPath);
-      const relativePath = path.relative(workspaceFolder.uri.fsPath, document.uri.fsPath);
-      const repoRelativePath = path.join(repositoryName, relativePath).replace(/\\/g, "/");
-
-      const content = document.getText();
-      const size = Buffer.byteLength(content, 'utf8');
-
-      await proxyService.executeQuery([{
-        sql: `INSERT INTO repository_files (repository_id, file_path, content, size, created_at)
-              VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
-              ON CONFLICT(repository_id, file_path) DO UPDATE SET
-              content = excluded.content,
-              size = excluded.size,
-              created_at = CURRENT_TIMESTAMP`,
-        params: [repoId, repoRelativePath, content, size]
-      }]);
-
-      debugLog(`Updated file in database: ${repoRelativePath}`);
-    } catch (error: any) {
-      debugLog(`Failed to update file in database: ${error.message || error}`);
-    }
-  });
+  );
 
   // Register commands
   const captureCommand = vscode.commands.registerCommand(
@@ -341,7 +348,11 @@ async function captureAndSendRepository(context: vscode.ExtensionContext) {
         }
 
         progress.report({ message: "Storing files...", increment: 70 });
-        await reindexRepository(repositoryName, workspaceFolder.uri.fsPath, files);
+        await reindexRepository(
+          repositoryName,
+          workspaceFolder.uri.fsPath,
+          files
+        );
 
         progress.report({ message: "Complete!", increment: 100 });
 
@@ -418,7 +429,6 @@ async function reindexRepository(
   workspacePath: string,
   files: FileData[]
 ) {
-
   const startTime = Date.now();
   try {
     const repoId = getRepositoryKey(repositoryName, workspacePath);
@@ -433,25 +443,13 @@ async function reindexRepository(
     while (true) {
       await sleep(1000);
 
-      const result = await proxyService.executeQuery([
-        {
-          sql: `INSERT INTO repositories (id, name, workspace_path, total_files, total_size, last_updated)
-       VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-       ON CONFLICT(id) DO UPDATE SET
-         name = excluded.name,
-         workspace_path = excluded.workspace_path,
-         total_files = excluded.total_files,
-         total_size = excluded.total_size,
-         last_updated = CURRENT_TIMESTAMP`,
-          params: [
-            repoId,
-            repositoryName,
-            workspacePath,
-            files.length,
-            totalSize,
-          ],
-        },
-      ]);
+      const result = await dataTransfer.upsertRepository(proxyService, {
+        id: repoId,
+        name: repositoryName,
+        workspacePath: workspacePath,
+        totalFiles: files.length,
+        totalSize: totalSize,
+      });
 
       debugLog(`Result: ${JSON.stringify(result)}`);
 
@@ -462,12 +460,7 @@ async function reindexRepository(
 
     // Delete existing files for this repository
     debugLog("\n--- Deleting Old Files ---");
-    await proxyService.executeQuery([
-      {
-        sql: "DELETE FROM repository_files WHERE repository_id = ?",
-        params: [repoId],
-      },
-    ]);
+    await dataTransfer.deleteRepositoryFiles(proxyService, repoId);
 
     // Insert files in batches
     debugLog("\n--- Inserting New Files ---");
@@ -489,12 +482,10 @@ async function reindexRepository(
         debugLog(`Starting batch ${index + 1}/${batches.length}`);
 
         await withRetries(async () => {
-          await proxyService.executeQuery(
-            batch.map((file) => ({
-              sql: `INSERT INTO repository_files (repository_id, file_path, content, size, created_at)
-              VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-              params: [repoId, file.path, file.content, file.size],
-            }))
+          await dataTransfer.insertRepositoryFilesBatch(
+            proxyService,
+            repoId,
+            batch
           );
         });
 
@@ -504,7 +495,7 @@ async function reindexRepository(
 
     // Count results and log errors
     results.forEach((result, index) => {
-      if (result.status === 'fulfilled') {
+      if (result.status === "fulfilled") {
         successCount++;
         debugLog(`  ✅ Batch ${index + 1} completed successfully`);
       } else {
@@ -534,21 +525,14 @@ async function reindexRepository(
     throw error;
   }
   const endTime = Date.now();
-  debugLog(`Total time: ${(endTime - startTime)/1000}s`);
+  debugLog(`Total time: ${(endTime - startTime) / 1000}s`);
 }
 
 async function listStoredRepositories(context: vscode.ExtensionContext) {
   try {
     await ensureDatabase(context);
 
-    const result = await proxyService.executeQuery([
-      {
-        sql: `SELECT name, workspace_path, total_files, total_size, last_updated
-       FROM repositories
-       ORDER BY last_updated DESC`,
-        params: [],
-      },
-    ]);
+    const result = await dataTransfer.getStoredRepositories(proxyService);
 
     const outputChannel = vscode.window.createOutputChannel(
       "Stored Repositories"
@@ -589,18 +573,7 @@ async function clearDatabase(context: vscode.ExtensionContext) {
   try {
     await ensureDatabase(context);
 
-    await proxyService.executeQuery([
-      {
-        sql: "DELETE FROM repository_files",
-        params: [],
-      },
-    ]);
-    await proxyService.executeQuery([
-      {
-        sql: "DELETE FROM repositories",
-        params: [],
-      },
-    ]);
+    await dataTransfer.clearAllRepositoryData(proxyService);
 
     vscode.window.showInformationMessage(
       "Successfully cleared all repository data from Chatrat."
