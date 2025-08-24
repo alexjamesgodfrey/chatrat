@@ -373,6 +373,8 @@ async function captureAndSendRepository(context: vscode.ExtensionContext) {
   );
 }
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 async function storeInAgentDB(
   repositoryName: string,
   workspacePath: string,
@@ -393,9 +395,12 @@ async function storeInAgentDB(
 
     // Upsert repository record
     outputChannel.appendLine("\n--- Upserting Repository ---");
-    await proxyService.executeQuery([
-      {
-        sql: `INSERT INTO repositories (id, name, workspace_path, total_files, total_size, last_updated)
+    while (true) {
+      await sleep(10000);
+
+      const result = await proxyService.executeQuery([
+        {
+          sql: `INSERT INTO repositories (id, name, workspace_path, total_files, total_size, last_updated)
        VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
        ON CONFLICT(id) DO UPDATE SET
          name = excluded.name,
@@ -403,71 +408,78 @@ async function storeInAgentDB(
          total_files = excluded.total_files,
          total_size = excluded.total_size,
          last_updated = CURRENT_TIMESTAMP`,
-        params: [
-          repoId,
-          repositoryName,
-          workspacePath,
-          files.length,
-          totalSize,
-        ],
-      },
-    ]);
+          params: [
+            repoId,
+            repositoryName,
+            workspacePath,
+            files.length,
+            totalSize,
+          ],
+        },
+      ]);
+
+      outputChannel.appendLine(`Result: ${JSON.stringify(result)}`);
+
+      if (result.results?.[0]?.rows?.length) {
+        break;
+      }
+    }
 
     // Delete existing files for this repository
-    outputChannel.appendLine("\n--- Deleting Old Files ---");
-    await proxyService.executeQuery([
-      {
-        sql: "DELETE FROM repository_files WHERE repository_id = ?",
-        params: [repoId],
-      },
-    ]);
+    // outputChannel.appendLine("\n--- Deleting Old Files ---");
+    // await proxyService.executeQuery([
+    //   {
+    //     sql: "DELETE FROM repository_files WHERE repository_id = ?",
+    //     params: [repoId],
+    //   },
+    // ]);
 
-    // Insert files in batches
-    outputChannel.appendLine("\n--- Inserting New Files ---");
-    const batchSize = 10;
-    let successCount = 0;
-    let errorCount = 0;
+    // // Insert files in batches
+    // outputChannel.appendLine("\n--- Inserting New Files ---");
+    // const batchSize = 10;
+    // let successCount = 0;
+    // let errorCount = 0;
 
-    for (let i = 0; i < files.length; i += batchSize) {
-      const batch = files.slice(i, i + batchSize);
-      outputChannel.appendLine(
-        `Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(
-          files.length / batchSize
-        )}`
-      );
+    // for (let i = 0; i < files.length; i += batchSize) {
+    //   const batch = files.slice(i, i + batchSize);
+    //   outputChannel.appendLine(
+    //     `Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(
+    //       files.length / batchSize
+    //     )}`
+    //   );
 
-      for (const file of batch) {
-        try {
-          await proxyService.executeQuery([
-            {
-              sql: `INSERT INTO repository_files (repository_id, file_path, content, size, created_at)
-             VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-              params: [repoId, file.path, file.content, file.size],
-            },
-          ]);
-          successCount++;
-        } catch (error: any) {
-          errorCount++;
-          outputChannel.appendLine(
-            `  ❌ Error: Failed to insert ${file.path} - ${error.message}`
-          );
-        }
-      }
+    //   for (const file of batch) {
+    //     try {
+    //       await proxyService.executeQuery([
+    //         {
+    //           sql: `INSERT INTO repository_files (repository_id, file_path, content, size, created_at)
+    //          VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+    //           params: [repoId, file.path, file.content, file.size],
+    //         },
+    //       ]);
+    //       successCount++;
+    //     } catch (error: any) {
+    //       errorCount++;
+    //       outputChannel.appendLine(
+    //         `  ❌ Error: Failed to insert ${file.path} - ${error.message}`
+    //       );
+    //     }
+    //   }
 
-      if (i + batchSize < files.length) {
-        await new Promise((resolve) => setTimeout(resolve, 100));
-      }
-    }
+    //   if (i + batchSize < files.length) {
+    //     await new Promise((resolve) => setTimeout(resolve, 100));
+    //   }
+    // }
 
-    outputChannel.appendLine(`\n--- Summary ---`);
-    outputChannel.appendLine(`Successfully inserted: ${successCount} files`);
-    outputChannel.appendLine(`Failed to insert: ${errorCount} files`);
+    // outputChannel.appendLine(`\n--- Summary ---`);
+    // outputChannel.appendLine(`Successfully inserted: ${successCount} files`);
+    // outputChannel.appendLine(`Failed to insert: ${errorCount} files`);
 
-    if (successCount === 0 && files.length > 0) {
-      throw new Error(
-        `Failed to store any files. Check "AgentDB Storage Debug" output for details.`
-      );
-    }
+    // if (successCount === 0 && files.length > 0) {
+    //   throw new Error(
+    //     `Failed to store any files. Check "AgentDB Storage Debug" output for details.`
+    //   );
+    // }
   } catch (error: any) {
     outputChannel.appendLine(`\n--- CRITICAL ERROR ---`);
     outputChannel.appendLine(`Error: ${error.message || error}`);

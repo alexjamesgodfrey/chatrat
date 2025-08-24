@@ -11,7 +11,7 @@ import {
   DEFAULT_AGENTDB_TOKEN,
   CHATRAT_TEMPLATE_NAME,
 } from "./const";
-import { SqlStatement } from "@chatrat/types";
+import { SqlResults, SqlStatement } from "@chatrat/types";
 import { validateAgentDbString } from "./validate-db";
 
 class AgentDBDatabase implements DatabaseProvider {
@@ -43,12 +43,12 @@ class AgentDBDatabase implements DatabaseProvider {
     this.connection = this.client.connect(this.token, this.dbName, this.dbType);
   }
 
-  async executeSql(statements: SqlStatement[]): Promise<void> {
+  async executeSql(statements: SqlStatement[]): Promise<SqlResults> {
     if (!this.connection) {
       throw new Error("AgentDB connection not initialized");
     }
 
-    await this.connection.execute(statements);
+    return await this.connection.execute(statements);
   }
 
   async createMcpSlug(): Promise<string> {
@@ -91,7 +91,7 @@ class PostgresDatabase implements DatabaseProvider {
   seedDatabase(): Promise<void> {
     throw new Error("Method not implemented.");
   }
-  async executeSql(statements: SqlStatement[]) {
+  async executeSql(statements: SqlStatement[]): Promise<SqlResults> {
     throw new Error("Method not implemented.");
   }
 }
@@ -116,9 +116,7 @@ export async function getDatabaseProviderFromAuthenticatedRequest(
     case "agentdb":
       // they use our own connection string
       if (!req.session.connectionString) {
-        return new AgentDBDatabase(
-          `chatrat-dev-${req.session.githubUser.login}`
-        );
+        return new AgentDBDatabase(`chatrat-3-${req.session.githubUser.login}`);
       }
 
       const agentDbValidationResult = validateAgentDbString(

@@ -20,21 +20,15 @@ router.post(
       body: { statements },
     } = req as RequestWithProvider;
 
-    console.log("grep statemetns ", statements);
+    console.log("grep statemetns ", statements.length);
     try {
-      await dbProvider.executeSql(statements);
+      const results = await dbProvider.executeSql(statements);
+      console.log("results", results);
+      res.json(results);
     } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: "Failed to execute SQL statements",
-      });
+      res.status(500).json(error);
       return;
     }
-
-    res.json({
-      success: true,
-      message: "SQL statements executed successfully",
-    });
   }
 );
 

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { ExecuteResult } from "@agentdb/sdk";
 
 // /api/execute-sql
 export const SqlStatement = z.object({
@@ -10,3 +11,4 @@ export const executeSqlSchema = z.object({
   statements: z.array(SqlStatement).max(100),
 });
 export type ExecuteSqlSchema = z.infer<typeof executeSqlSchema>;
+export type SqlResults = ExecuteResult;
