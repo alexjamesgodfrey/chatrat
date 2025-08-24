@@ -18,6 +18,8 @@ let proxyService: ProxyService;
 let activeDbName: string | undefined;
 let activeTemplateName: string | undefined;
 
+const databaseProvisionedKey = "databaseProvisionedReal2";
+
 export async function activate(context: vscode.ExtensionContext) {
   console.log("Chatrat (AgentDB) extension is now active!");
 
@@ -178,7 +180,7 @@ async function createDatabaseWithTemplate(context: vscode.ExtensionContext) {
     outputChannel.appendLine(`Database provisioned successfully ✅`);
 
     // save to vscode.workspace that we provisioned the database
-    context.globalState.update("databaseProvisioned", true);
+    context.globalState.update(databaseProvisionedKey, true);
   } catch (error) {
     console.error("Template application error:", error);
     throw error;
@@ -191,7 +193,7 @@ async function ensureDatabase(context: vscode.ExtensionContext): Promise<void> {
       "Chatrat - Ensure Database"
     );
 
-    if (context.globalState.get("databaseProvisioned5")) {
+    if (context.globalState.get(databaseProvisionedKey)) {
       outputChannel.appendLine(`Database already provisioned`);
       outputChannel.show();
       return;
