@@ -72,17 +72,31 @@ jobs:
             echo "No feature commits found - patch version bump"
           fi
 
-      - name: Set server base URL configuration
-        working-directory: apps/extension
-        run: |
-          # Install jq if not available
-          sudo apt-get update && sudo apt-get install -y jq
-
-          # Update the serverBaseUrl default value
-          jq '.contributes.configuration.properties."chatrat.serverBaseUrl".default = "https://api.chatrat.cat"' package.json > package.json.tmp
-          mv package.json.tmp package.json
-
-          echo "Updated serverBaseUrl to: https://api.chatrat.cat
+          - name: Set server base URL configuration
+          working-directory: apps/extension
+          run: |
+            # Update the serverBaseUrl in package.json to ensure it's set correctly
+            node -e "
+              const fs = require('fs');
+              const pkg = require('./package.json');
+              
+              // Ensure the configuration path exists
+              if (!pkg.contributes) pkg.contributes = {};
+              if (!pkg.contributes.configuration) pkg.contributes.configuration = {};
+              if (!pkg.contributes.configuration.properties) pkg.contributes.configuration.properties = {};
+              
+              // Set or update the serverBaseUrl configuration
+              if (!pkg.contributes.configuration.properties['chatrat.serverBaseUrl']) {
+                pkg.contributes.configuration.properties['chatrat.serverBaseUrl'] = {};
+              }
+              
+              pkg.contributes.configuration.properties['chatrat.serverBaseUrl'].default = 'https://api.chatrat.cat';
+              
+              // Write the updated package.json
+              fs.writeFileSync('./package.json', JSON.stringify(pkg, null, 2));
+              
+              console.log('Updated serverBaseUrl to: https://api.chatrat.cat');
+            "
 
       - name: Bump version
         id: version
