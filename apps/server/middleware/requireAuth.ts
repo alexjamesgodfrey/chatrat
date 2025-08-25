@@ -1,10 +1,9 @@
 // middleware/requireAuth.ts
 import axios from "axios";
-import type { Response } from "express";
-import { Request, RequestHandler } from "express";
+import express from "express";
 import type { AuthenticatedRequest } from "../types";
 
-function isAuthenticated(req: Request): req is AuthenticatedRequest {
+function isAuthenticated(req: express.Request): req is AuthenticatedRequest {
   const aReq = req as AuthenticatedRequest;
   const result = !!(aReq.session?.githubToken && aReq.session?.githubUser);
   console.log("🔍 isAuthenticated check:", {
@@ -16,7 +15,11 @@ function isAuthenticated(req: Request): req is AuthenticatedRequest {
   return result;
 }
 
-export const requireAuth: RequestHandler = async (req, res: Response, next) => {
+export const requireAuth: express.RequestHandler = async (
+  req: express.Request,
+  res: express.Response,
+  next
+) => {
   console.log("🚪 requireAuth middleware started");
   console.log("📋 Initial request details:", {
     method: req.method,

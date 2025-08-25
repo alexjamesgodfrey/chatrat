@@ -12,7 +12,7 @@ import {
   DEFAULT_AGENTDB_TOKEN,
   CHATRAT_TEMPLATE_NAME,
 } from "./const";
-import { SqlResults, SqlStatement } from "@chatrat/types";
+import { SqlResults, SqlStatement } from "@chatrat/types/src/index";
 import { validateAgentDbString } from "./validate-db";
 import { ValidationError } from "@agentdb/sdk";
 

@@ -1,20 +1,20 @@
-import { Router } from "express";
+import express, { Router } from "express";
 import { requireAuth } from "../middleware/requireAuth";
 import { validateSchema } from "../middleware/validateSchema";
 import { validateSession } from "../middleware/validateSession";
 import { RequestWithProvider } from "../types";
-import { executeSqlSchema } from "@chatrat/types";
-import { attachDatabaseProvider } from "src/middleware/attachDatabaseProvider";
+import { executeSqlSchema } from "@chatrat/types/src/index";
+import { attachDatabaseProvider } from "../middleware/attachDatabaseProvider";
 
 const router = Router();
 
 router.post(
-  "/api/execute-sql",
+  "/v1/execute-sql",
   requireAuth,
   validateSession,
   attachDatabaseProvider,
   validateSchema(executeSqlSchema),
-  async (req, res) => {
+  async (req: express.Request, res: express.Response) => {
     const {
       dbProvider,
       body: { statements },

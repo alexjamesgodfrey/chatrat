@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { ExecuteResult } from "@agentdb/sdk";
 
-// /api/execute-sql
+// /v1/execute-sql
 export const SqlStatement = z.object({
   sql: z.string(),
   params: z.array(z.any()).optional().default([]),

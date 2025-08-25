@@ -1,5 +1,14 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "globalEnv": [
+    "DEFAULT_AGENTDB_TOKEN",
+    "DEFAULT_AGENTDB_DB_API_KEY",
+    "AGENTDB_BASE_URL",
+    "SESSION_SECRET",
+    "BASE_URL",
+    "UPSTASH_REDIS_REST_URL",
+    "UPSTASH_REDIS_REST_TOKEN"
+  ],
   "tasks": {
     "dev": {
       "cache": false,

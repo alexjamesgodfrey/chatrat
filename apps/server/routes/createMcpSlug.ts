@@ -1,14 +1,14 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/requireAuth";
 import { RequestWithProvider } from "../types";
-import { validateSession } from "src/middleware/validateSession";
-import { attachDatabaseProvider } from "src/middleware/attachDatabaseProvider";
+import { validateSession } from "../middleware/validateSession";
+import { attachDatabaseProvider } from "../middleware/attachDatabaseProvider";
 
 const router = Router();
 
 // Create MCP slug
 router.post(
-  "/api/agentdb/create-mcp-slug",
+  "/v1/create-mcp-slug",
   requireAuth,
   validateSession,
   attachDatabaseProvider,

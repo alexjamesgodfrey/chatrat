@@ -1,15 +1,14 @@
 {
   "extends": "../../packages/tsconfig/base.json",
   "compilerOptions": {
-    "jsx": "react-jsx",
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "module": "ESNext",
+    "rootDir": "src",
+    "outDir": "dist",
+    "declaration": true,
+    "module": "commonjs",
     "target": "ES2020",
-    "baseUrl": ".",
-    "paths": {
-      "@chatrat/types/*": ["./src/*"]
-    }
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules"]
+  "include": ["src/**/*.ts"]
 }

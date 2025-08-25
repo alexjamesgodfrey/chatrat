@@ -2,12 +2,12 @@ import { Router } from "express";
 import { requireAuth } from "../middleware/requireAuth";
 import { validateSession } from "../middleware/validateSession";
 import { RequestWithProvider } from "../types";
-import { attachDatabaseProvider } from "src/middleware/attachDatabaseProvider";
+import { attachDatabaseProvider } from "../middleware/attachDatabaseProvider";
 
 const router = Router();
 
 router.post(
-  "/api/check-or-seed",
+  "/v1/check-or-seed",
   requireAuth,
   validateSession,
   attachDatabaseProvider,
