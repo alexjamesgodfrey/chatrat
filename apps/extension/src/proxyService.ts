@@ -94,7 +94,7 @@ export class ProxyService {
       const body: ExecuteSqlSchema = {
         statements,
       };
-      const response = await this.httpClient.post("/api/execute-sql", body);
+      const response = await this.httpClient.post("/v1/execute-sql", body);
 
       return response.data;
     } catch (error) {
@@ -107,7 +107,7 @@ export class ProxyService {
 
   public async checkOrSeedDatabase(): Promise<void> {
     try {
-      const response = await this.httpClient.post("/api/check-or-seed");
+      const response = await this.httpClient.post("/v1/check-or-seed");
       return response.data;
     } catch (error) {
       throw new Error(
@@ -118,10 +118,8 @@ export class ProxyService {
 
   public async createMcpSlug(): Promise<McpSlugResult> {
     try {
-      const response = await this.httpClient.post(
-        "/api/agentdb/create-mcp-slug"
-      );
-      
+      const response = await this.httpClient.post("/v1/create-mcp-slug");
+
       return response.data;
     } catch (error) {
       console.error("Create MCP slug error:", error);

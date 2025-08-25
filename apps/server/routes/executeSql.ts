@@ -9,7 +9,7 @@ import { attachDatabaseProvider } from "../middleware/attachDatabaseProvider";
 const router = Router();
 
 router.post(
-  "/api/execute-sql",
+  "/v1/execute-sql",
   requireAuth,
   validateSession,
   attachDatabaseProvider,

@@ -8,7 +8,7 @@ const router = Router();
 
 // Create MCP slug
 router.post(
-  "/api/agentdb/create-mcp-slug",
+  "/v1/create-mcp-slug",
   requireAuth,
   validateSession,
   attachDatabaseProvider,
