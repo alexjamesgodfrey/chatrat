@@ -72,6 +72,18 @@ jobs:
             echo "No feature commits found - patch version bump"
           fi
 
+      - name: Set server base URL configuration
+        working-directory: apps/extension
+        run: |
+          # Install jq if not available
+          sudo apt-get update && sudo apt-get install -y jq
+
+          # Update the serverBaseUrl default value
+          jq '.contributes.configuration.properties."chatrat.serverBaseUrl".default = "https://api.chatrat.cat"' package.json > package.json.tmp
+          mv package.json.tmp package.json
+
+          echo "Updated serverBaseUrl to: https://api.chatrat.cat
+
       - name: Bump version
         id: version
         working-directory: apps/extension
