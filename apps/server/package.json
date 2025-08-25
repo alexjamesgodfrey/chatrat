@@ -5,8 +5,9 @@
   "main": "api/index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node dist/api/index.js",
+    "start": "node dist/api/index.js ",
     "dev": "tsx watch api/server.ts",
+    "debug": "NODE_OPTIONS='--inspect' tsx watch api/server.ts",
     "build": "tsc && tsc-alias"
   },
   "keywords": [
