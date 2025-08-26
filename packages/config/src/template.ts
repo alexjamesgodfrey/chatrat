@@ -1,6 +1,6 @@
 import { AgentDBTemplate } from "@chatrat/types";
 
-export const templates: AgentDBTemplate = {
+export const template: AgentDBTemplate = {
   name: "chatrat-template",
   description: `Schema Overview (SQLite)
 

@@ -47,6 +47,7 @@ class WriteQueue<T> {
 
   public enqueueBatch(items: T[]): void {
     this.queue.push(...items);
+    debugLog(`Enqueued items. Queue size: ${this.queue.length}`);
     this.scheduleFlush();
   }
 
@@ -173,8 +174,6 @@ export class ProxyService {
     statements: SqlStatement[],
     executeNow: boolean = true
   ): Promise<ExecuteResult> {
-    debugLog("Queue size: " + this.sqlQueue.getQueueLength());
-
     if (executeNow) {
       // First flush any queued operations to preserve ordering
       await this.flushQueuedStatements();

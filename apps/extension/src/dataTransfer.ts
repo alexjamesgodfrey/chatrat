@@ -1,5 +1,5 @@
 import { ProxyService } from "./proxyService";
-
+import { debugLog } from "./util";
 export interface FileData {
   path: string;
   content: string;
@@ -24,6 +24,7 @@ export async function upsertRepositoryFile(
   content: string,
   size: number
 ): Promise<void> {
+  debugLog(`Upserting file: ${filePath}`);
   await proxyService.executeQuery(
     [
       {
@@ -47,6 +48,7 @@ export async function upsertRepository(
   proxyService: ProxyService,
   repositoryData: RepositoryData
 ): Promise<any> {
+  debugLog(`Upserting repository: ${repositoryData.name}`);
   const runInBackground = false;
   const result = await proxyService.executeQuery(
     [
@@ -80,6 +82,7 @@ export async function deleteRepositoryFiles(
   proxyService: ProxyService,
   repoId: string
 ): Promise<void> {
+  debugLog(`Deleting files for repository: ${repoId}`);
   await proxyService.executeQuery(
     [
       {
@@ -99,13 +102,14 @@ export async function insertRepositoryFilesBatch(
   repoId: string,
   files: FileData[]
 ): Promise<void> {
+  debugLog(`Inserting batch of ${files.length} files`);
   await proxyService.executeQuery(
     files.map((file) => ({
       sql: `INSERT INTO repository_files (repository_id, file_path, content, size, created_at)
             VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`,
       params: [repoId, file.path, file.content, file.size],
     })),
-    false
+    true
   );
 }
 
@@ -115,6 +119,7 @@ export async function insertRepositoryFilesBatch(
 export async function getStoredRepositories(
   proxyService: ProxyService
 ): Promise<any> {
+  debugLog(`Getting stored repositories`);
   const result = await proxyService.executeQuery([
     {
       sql: `SELECT name, workspace_path, total_files, total_size, last_updated
@@ -132,29 +137,20 @@ export async function getStoredRepositories(
 export async function clearAllRepositoryData(
   proxyService: ProxyService
 ): Promise<void> {
-  await proxyService.executeQuery([
-    {
-      sql: "DELETE FROM repository_files",
+  debugLog(`Clearing all repository data`);
+  await proxyService.executeQuery(
+    [
+      "repository_files",
+      "repositories",
+      "open_files",
+      "repository_files_fts_data",
+      "repository_files_fts_idx",
+    ].map((table) => ({
+      sql: `DELETE FROM ${table}`,
       params: [],
-    },
-    {
-      sql: "DELETE FROM repositories",
-      params: [],
-    },
-    {
-      sql: "DELETE FROM open_files",
-      params: [],
-    },
-    {
-      sql: "DELETE FROM repository_files_fts_data",
-      params: [],
-    },
-
-    {
-      sql: "DELETE FROM repository_files_fts_idx",
-      params: [],
-    },
-  ]);
+    })),
+    false
+  );
 }
 
 export async function upsertFocusedFile(
@@ -162,6 +158,7 @@ export async function upsertFocusedFile(
   repoId: string,
   filePath: string
 ): Promise<void> {
+  debugLog(`Upserting focused file: ${filePath}`);
   await proxyService.executeQuery(
     [
       {
@@ -183,9 +180,7 @@ export async function upsertFileDiagnostics(
   filePath: string,
   errorsJson: string
 ): Promise<void> {
-  console.log(
-    `I want to upsert the following diagnostics for ${repoId} and ${filePath}: ${errorsJson}`
-  );
+  debugLog(`Upserting diagnostics for file: ${filePath}`);
   await proxyService.executeQuery(
     [
       {
@@ -207,6 +202,7 @@ export async function deleteOpenFileBecauseItClosed(
   repoId: string,
   filePath: string
 ): Promise<void> {
+  debugLog(`Deleting open file because it closed: ${filePath}`);
   const result = await proxyService.executeQuery(
     [
       {
@@ -226,9 +222,11 @@ export async function deleteOpenFileBecauseItClosed(
 export async function listRepositories(
   proxyService: ProxyService
 ): Promise<string[]> {
+  debugLog(`Listing repositories`);
   const response = await proxyService.executeQuery([
     {
       sql: "SELECT DISTINCT name FROM repositories",
+      params: [],
     },
   ]);
 

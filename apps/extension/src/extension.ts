@@ -1,7 +1,4 @@
 import * as crypto from "crypto";
-import * as fs from "fs";
-import ignore from "ignore";
-import * as path from "path";
 import * as vscode from "vscode";
 import { AuthService } from "./authService";
 import { ChatratViewProvider } from "./chatratViewProvider";
@@ -9,6 +6,9 @@ import * as dataTransfer from "./dataTransfer";
 import { FileData } from "./dataTransfer";
 import { McpSlugResult, ProxyService } from "./proxyService";
 import { debugLog, OUTPUT_CHANNEL_NAME } from "./util";
+import { setupEventListeners } from "./eventListeners";
+import { scanDirectory } from "./fileScanner";
+import { getRepositoryInfo, formatBytes } from "./pathUtils";
 
 // Global services
 let authService: AuthService;
@@ -49,173 +49,8 @@ export async function activate(context: vscode.ExtensionContext) {
     }
   }
 
-  // Set up file save event handler
-  const fileWatcher = vscode.workspace.onDidSaveTextDocument(
-    async (document) => {
-      debugLog("Saved: " + document.fileName);
-      debugLog("Full path: " + document.uri.fsPath);
-
-      if (!authService.getIsDatabaseSeeded()) {
-        return;
-      }
-
-      try {
-        const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-        if (!workspaceFolder) return;
-
-        const repositoryName = path.basename(workspaceFolder.uri.fsPath);
-        const repoId = getRepositoryKey(
-          repositoryName,
-          workspaceFolder.uri.fsPath
-        );
-        const relativePath = path.relative(
-          workspaceFolder.uri.fsPath,
-          document.uri.fsPath
-        );
-        const repoRelativePath = path
-          .join(repositoryName, relativePath)
-          .replace(/\\/g, "/");
-
-        const content = document.getText();
-        const size = Buffer.byteLength(content, "utf8");
-
-        await dataTransfer.upsertRepositoryFile(
-          proxyService,
-          repoId,
-          repoRelativePath,
-          content,
-          size
-        );
-
-        debugLog(`Updated file in database: ${repoRelativePath}`);
-      } catch (error: any) {
-        debugLog(
-          `Failed to update file in database: ${error.message || error}`
-        );
-      }
-    }
-  );
-
-  const fileCloseWatcher = vscode.workspace.onDidCloseTextDocument(
-    async (document) => {
-      debugLog("Closed: " + document.fileName);
-      debugLog("Full path: " + document.uri.fsPath);
-
-      if (!authService.getIsDatabaseSeeded()) {
-        return;
-      }
-
-      try {
-        const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-        if (!workspaceFolder) return;
-        if (!document.uri.fsPath.startsWith(workspaceFolder.uri.fsPath)) {
-          return;
-        }
-
-        const repositoryName = path.basename(workspaceFolder.uri.fsPath);
-        const repoId = getRepositoryKey(
-          repositoryName,
-          workspaceFolder.uri.fsPath
-        );
-        const relativePath = path.relative(
-          workspaceFolder.uri.fsPath,
-          document.uri.fsPath
-        );
-        const repoRelativePath = path
-          .join(repositoryName, relativePath)
-          .replace(/\\/g, "/");
-
-        await dataTransfer.deleteOpenFileBecauseItClosed(
-          proxyService,
-          repoId,
-          repoRelativePath
-        );
-
-        debugLog(`Closed file in database: ${relativePath}`);
-      } catch (error: any) {
-        debugLog(`Failed to close file in database: ${error.message || error}`);
-      }
-    }
-  );
-
-  const focusWatcher = vscode.window.onDidChangeActiveTextEditor(
-    async (editor) => {
-      if (!editor) return;
-
-      // check if file path is in the repo/workspace
-      const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-      if (!workspaceFolder) return;
-      if (!editor.document.uri.fsPath.startsWith(workspaceFolder.uri.fsPath)) {
-        return;
-      }
-      if (!authService.getIsDatabaseSeeded()) {
-        return;
-      }
-
-      const repositoryName = path.basename(workspaceFolder.uri.fsPath);
-      const repoId = getRepositoryKey(
-        repositoryName,
-        workspaceFolder.uri.fsPath
-      );
-      const relativePath = path.relative(
-        workspaceFolder.uri.fsPath,
-        editor.document.uri.fsPath
-      );
-      const repoRelativePath = path
-        .join(repositoryName, relativePath)
-        .replace(/\\/g, "/");
-
-      await dataTransfer.upsertFocusedFile(
-        proxyService,
-        repoId,
-        repoRelativePath
-      );
-
-      debugLog("Active editor changed: " + editor.document.fileName);
-      debugLog("Full path: " + editor.document.uri.fsPath);
-    }
-  );
-
-  // get contents of problems panel
-  const problemsWatcher = vscode.languages.onDidChangeDiagnostics((event) => {
-    if (!authService.getIsDatabaseSeeded()) {
-      return;
-    }
-
-    if (event.uris.length === 0) {
-      return;
-    }
-
-    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-    if (!workspaceFolder) return;
-
-    const repositoryName = path.basename(workspaceFolder.uri.fsPath);
-    const repoId = getRepositoryKey(repositoryName, workspaceFolder.uri.fsPath);
-
-    debugLog("Diagnostics changed: " + event.uris.length);
-    debugLog("First diagnostic: " + event.uris[0]);
-    debugLog("First diagnostic keys: " + Object.keys(event));
-    // const errors = event.uris.map(uri => vscode.languages.getDiagnostics(uri));
-    // console.log(JSON.stringify(errors.map((e) => e.map((e) => e.message))));
-
-    const fileErrors = event.uris.forEach((uri) => {
-      const errors = vscode.languages.getDiagnostics(uri);
-      const relativePath = path.relative(
-        workspaceFolder.uri.fsPath,
-        uri.fsPath
-      );
-      const repoRelativePath = path
-        .join(repositoryName, relativePath)
-        .replace(/\\/g, "/");
-
-      dataTransfer.upsertFileDiagnostics(
-        proxyService,
-        repoId,
-        repoRelativePath,
-        JSON.stringify(errors)
-      );
-    });
-  });
+  // Set up event listeners
+  setupEventListeners(context, { authService, proxyService });
 
   // Register commands
   const sidebarCommand = vscode.commands.registerCommand(
@@ -344,11 +179,7 @@ export async function activate(context: vscode.ExtensionContext) {
     clearCommand,
     mcpCommand,
     authCommand,
-    logoutCommand,
-    fileWatcher,
-    fileCloseWatcher,
-    focusWatcher,
-    problemsWatcher
+    logoutCommand
   );
 
   // status bar
@@ -584,34 +415,14 @@ async function captureAndSendRepository(
 
         progress.report({ message: "Scanning files...", increment: 10 });
 
-        const repositoryName = path.basename(workspaceFolder.uri.fsPath);
-        const ig = ignore();
-        ig.add(excludePatterns);
-
-        // Check for .gitignore
-        const gitignorePath = path.join(
-          workspaceFolder.uri.fsPath,
-          ".gitignore"
-        );
-        if (fs.existsSync(gitignorePath)) {
-          const gitignoreContent = fs.readFileSync(gitignorePath, "utf-8");
-          ig.add(gitignoreContent);
-        }
-
-        const files: FileData[] = [];
-        const errors: string[] = [];
-
-        await walkDirectory(
-          workspaceFolder.uri.fsPath,
-          workspaceFolder.uri.fsPath,
-          repositoryName,
-          files,
-          errors,
-          ig,
+        const scanResult = await scanDirectory(workspaceFolder.uri.fsPath, {
+          excludePatterns,
           maxFileSize,
           progress,
           token
-        );
+        });
+
+        const { files, errors } = scanResult;
 
         if (token.isCancellationRequested) {
           vscode.window.showInformationMessage("Repository capture cancelled");
@@ -619,9 +430,13 @@ async function captureAndSendRepository(
         }
 
         progress.report({ message: "Storing files...", increment: 70 });
+        const repoInfo = getRepositoryInfo();
+        if (!repoInfo) {
+          throw new Error("Could not get repository information");
+        }
         await reindexRepository(
-          repositoryName,
-          workspaceFolder.uri.fsPath,
+          repoInfo.name,
+          repoInfo.workspacePath,
           files
         );
 
@@ -634,7 +449,7 @@ async function captureAndSendRepository(
         const previousRepositories = authService.getIndexedRepositories();
         provider.updateIndexedRepositories([
           ...previousRepositories,
-          repositoryName,
+          repoInfo.name,
         ]);
         progress.report({ message: "Complete!", increment: 100 });
 
@@ -652,11 +467,11 @@ async function captureAndSendRepository(
                 vscode.env.clipboard.writeText(newUrl);
               }
             } else if (selection === "View Details") {
-              debugLog(`Repository: ${repositoryName}`);
+              debugLog(`Repository: ${repoInfo.name}`);
               debugLog(`Files stored: ${files.length}`);
               debugLog(
                 `Total size: ${formatBytes(
-                  files.reduce((acc, f) => acc + f.size, 0)
+                  files.reduce((acc: number, f: FileData) => acc + f.size, 0)
                 )}`
               );
               debugLog(`Database: ${activeDbName}`);
@@ -878,133 +693,7 @@ async function clearDatabase(
   }
 }
 
-async function walkDirectory(
-  dirPath: string,
-  rootPath: string,
-  repositoryName: string,
-  files: FileData[],
-  errors: string[],
-  ig: any,
-  maxFileSize: number,
-  progress: vscode.Progress<{ message?: string; increment?: number }>,
-  token: vscode.CancellationToken
-): Promise<void> {
-  if (token.isCancellationRequested) return;
 
-  const entries = fs.readdirSync(dirPath, { withFileTypes: true });
-
-  for (const entry of entries) {
-    if (token.isCancellationRequested) return;
-
-    const fullPath = path.join(dirPath, entry.name);
-    const relativePath = path.relative(rootPath, fullPath);
-
-    if (ig.ignores(relativePath)) continue;
-
-    if (entry.isDirectory()) {
-      await walkDirectory(
-        fullPath,
-        rootPath,
-        repositoryName,
-        files,
-        errors,
-        ig,
-        maxFileSize,
-        progress,
-        token
-      );
-    } else if (entry.isFile()) {
-      try {
-        const stats = fs.statSync(fullPath);
-
-        if (stats.size > maxFileSize) {
-          errors.push(
-            `${relativePath} (file too large: ${formatBytes(stats.size)})`
-          );
-          continue;
-        }
-
-        if (isBinaryFile(fullPath)) {
-          errors.push(`${relativePath} (binary file)`);
-          continue;
-        }
-
-        const content = fs.readFileSync(fullPath, "utf-8");
-        const repoRelativePath = path
-          .join(repositoryName, relativePath)
-          .replace(/\\/g, "/");
-
-        files.push({
-          path: repoRelativePath,
-          content,
-          size: stats.size,
-        });
-
-        if (files.length % 10 === 0) {
-          progress.report({
-            message: `Processed ${files.length} files...`,
-            increment: Math.min(2, 60 / files.length),
-          });
-        }
-      } catch (error) {
-        errors.push(`${relativePath} (${error})`);
-      }
-    }
-  }
-}
-
-function isBinaryFile(filePath: string): boolean {
-  const binaryExtensions = [
-    ".exe",
-    ".dll",
-    ".so",
-    ".dylib",
-    ".pdf",
-    ".zip",
-    ".tar",
-    ".gz",
-    ".jpg",
-    ".jpeg",
-    ".png",
-    ".gif",
-    ".bmp",
-    ".ico",
-    ".svg",
-    ".mp3",
-    ".mp4",
-    ".avi",
-    ".mov",
-    ".wmv",
-    ".flv",
-    ".doc",
-    ".docx",
-    ".xls",
-    ".xlsx",
-    ".ppt",
-    ".pptx",
-    ".db",
-    ".sqlite",
-    ".class",
-    ".jar",
-    ".war",
-    ".ear",
-    ".woff",
-    ".woff2",
-    ".ttf",
-    ".eot",
-    ".otf",
-  ];
-  const ext = path.extname(filePath).toLowerCase();
-  return binaryExtensions.includes(ext);
-}
-
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return "0 Bytes";
-  const k = 1024;
-  const sizes = ["Bytes", "KB", "MB", "GB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
-}
 
 export function deactivate() {
   /* NO-OP */

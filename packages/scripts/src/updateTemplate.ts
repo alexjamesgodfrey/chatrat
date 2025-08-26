@@ -1,3 +1,18 @@
-import { templates } from "@chatrat/config/template";
+import { template } from "@chatrat/config/template";
+import { DatabaseService } from "@agentdb/sdk";
 
-console.log(templates);
+const apiKey = process.env.AGENTDB_API_KEY;
+const service = new DatabaseService(
+  "https://api.agentdb.dev/",
+  apiKey!,
+  false
+);
+
+service.createTemplate(
+    template.name,
+    template.migrations,
+    template.description,
+)
+.then(console.log)
+.catch(console.error)
+
