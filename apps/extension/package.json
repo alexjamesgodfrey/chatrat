@@ -21,7 +21,7 @@
     "onUri"
   ],
   "publisher": "ServietteLLC",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "main": "./out/extension.js",
   "contributes": {
     "configuration": {
