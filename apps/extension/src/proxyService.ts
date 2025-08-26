@@ -108,6 +108,9 @@ export class ProxyService {
   public async checkOrSeedDatabase(): Promise<void> {
     try {
       const response = await this.httpClient.post("/v1/check-or-seed");
+      if (response.data.success) {
+        this.authService.setIsDatabaseSeeded(true);
+      }
       return response.data;
     } catch (error) {
       throw new Error(

@@ -1,4 +1,3 @@
-
 import { Router } from "express";
 import { requireAuth } from "../middleware/requireAuth";
 import { validateSession } from "../middleware/validateSession";

@@ -25,7 +25,6 @@ let activeDbName: string | undefined;
 let activeTemplateName: string | undefined;
 
 const hasSeenWelcomeMessageKey = "hasSeenWelcomeMessage";
-const databaseProvisionedKey = "databaseProvisionedReal14";
 
 export async function activate(context: vscode.ExtensionContext) {
   const provider = new ChatratViewProvider(context.extensionUri, context);
@@ -45,13 +44,17 @@ export async function activate(context: vscode.ExtensionContext) {
   // Initialize authentication
   await authService.initialize();
 
+  if (authService.isAuthenticated()) {
+    await proxyService.checkOrSeedDatabase();
+  }
+
   // Set up file save event handler
   const fileWatcher = vscode.workspace.onDidSaveTextDocument(
     async (document) => {
       debugLog("Saved: " + document.fileName);
       debugLog("Full path: " + document.uri.fsPath);
 
-      if (!context.globalState.get(databaseProvisionedKey)) {
+      if (!authService.getIsDatabaseSeeded()) {
         return;
       }
 
@@ -92,47 +95,47 @@ export async function activate(context: vscode.ExtensionContext) {
     }
   );
 
-  const fileCloseWatcher = vscode.workspace.onDidCloseTextDocument(async (document) => {
-    debugLog("Closed: " + document.fileName);
-    debugLog("Full path: " + document.uri.fsPath);
+  const fileCloseWatcher = vscode.workspace.onDidCloseTextDocument(
+    async (document) => {
+      debugLog("Closed: " + document.fileName);
+      debugLog("Full path: " + document.uri.fsPath);
 
-    if (!context.globalState.get(databaseProvisionedKey)) {
-      return;
-    }
-
-    try {
-      const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-      if (!workspaceFolder) return;
-      if (!document.uri.fsPath.startsWith(workspaceFolder.uri.fsPath)) {
+      if (!authService.getIsDatabaseSeeded()) {
         return;
       }
 
-      const repositoryName = path.basename(workspaceFolder.uri.fsPath);
-      const repoId = getRepositoryKey(
-        repositoryName,
-        workspaceFolder.uri.fsPath
-      );
-      const relativePath = path.relative(
-        workspaceFolder.uri.fsPath,
-        document.uri.fsPath
-      );
-      const repoRelativePath = path
-        .join(repositoryName, relativePath)
-        .replace(/\\/g, "/");
+      try {
+        const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+        if (!workspaceFolder) return;
+        if (!document.uri.fsPath.startsWith(workspaceFolder.uri.fsPath)) {
+          return;
+        }
 
-      await dataTransfer.deleteOpenFileBecauseItClosed(
-        proxyService,
-        repoId,
-        repoRelativePath
-      );
+        const repositoryName = path.basename(workspaceFolder.uri.fsPath);
+        const repoId = getRepositoryKey(
+          repositoryName,
+          workspaceFolder.uri.fsPath
+        );
+        const relativePath = path.relative(
+          workspaceFolder.uri.fsPath,
+          document.uri.fsPath
+        );
+        const repoRelativePath = path
+          .join(repositoryName, relativePath)
+          .replace(/\\/g, "/");
 
-      debugLog(`Closed file in database: ${relativePath}`);
-    } catch (error: any) {
-      debugLog(
-        `Failed to close file in database: ${error.message || error}`
-      );
+        await dataTransfer.deleteOpenFileBecauseItClosed(
+          proxyService,
+          repoId,
+          repoRelativePath
+        );
+
+        debugLog(`Closed file in database: ${relativePath}`);
+      } catch (error: any) {
+        debugLog(`Failed to close file in database: ${error.message || error}`);
+      }
     }
-  });
+  );
 
   const focusWatcher = vscode.window.onDidChangeActiveTextEditor(
     async (editor) => {
@@ -144,7 +147,7 @@ export async function activate(context: vscode.ExtensionContext) {
       if (!editor.document.uri.fsPath.startsWith(workspaceFolder.uri.fsPath)) {
         return;
       }
-      if (!context.globalState.get(databaseProvisionedKey)) {
+      if (!authService.getIsDatabaseSeeded()) {
         return;
       }
 
@@ -169,13 +172,12 @@ export async function activate(context: vscode.ExtensionContext) {
 
       debugLog("Active editor changed: " + editor.document.fileName);
       debugLog("Full path: " + editor.document.uri.fsPath);
-
     }
   );
 
   // get contents of problems panel
   const problemsWatcher = vscode.languages.onDidChangeDiagnostics((event) => {
-    if (!context.globalState.get(databaseProvisionedKey)) {
+    if (!authService.getIsDatabaseSeeded()) {
       return;
     }
 
@@ -185,20 +187,16 @@ export async function activate(context: vscode.ExtensionContext) {
 
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
     if (!workspaceFolder) return;
-    
-    const repositoryName = path.basename(workspaceFolder.uri.fsPath);
-    const repoId = getRepositoryKey(
-      repositoryName,
-      workspaceFolder.uri.fsPath
-    );
 
+    const repositoryName = path.basename(workspaceFolder.uri.fsPath);
+    const repoId = getRepositoryKey(repositoryName, workspaceFolder.uri.fsPath);
 
     debugLog("Diagnostics changed: " + event.uris.length);
     debugLog("First diagnostic: " + event.uris[0]);
     debugLog("First diagnostic keys: " + Object.keys(event));
     // const errors = event.uris.map(uri => vscode.languages.getDiagnostics(uri));
     // console.log(JSON.stringify(errors.map((e) => e.map((e) => e.message))));
-    
+
     const fileErrors = event.uris.forEach((uri) => {
       const errors = vscode.languages.getDiagnostics(uri);
       const relativePath = path.relative(
@@ -208,7 +206,7 @@ export async function activate(context: vscode.ExtensionContext) {
       const repoRelativePath = path
         .join(repositoryName, relativePath)
         .replace(/\\/g, "/");
-      
+
       dataTransfer.upsertFileDiagnostics(
         proxyService,
         repoId,
@@ -217,7 +215,6 @@ export async function activate(context: vscode.ExtensionContext) {
       );
     });
   });
-  
 
   // Register commands
   const sidebarCommand = vscode.commands.registerCommand(
@@ -267,8 +264,12 @@ export async function activate(context: vscode.ExtensionContext) {
         context.globalState.update("chatrat.hasConsented", true);
       }
 
+      if (!authService.getIsDatabaseSeeded()) {
+        await proxyService.checkOrSeedDatabase();
+      }
+
       // Now check authentication
-      if (await ensureAuthenticated()) {
+      if ((await ensureAuthenticated()) && authService.getIsDatabaseSeeded()) {
         provider.updateAuthState(true);
         updateStatusBar();
         await captureAndSendRepository(context, provider);
@@ -318,6 +319,7 @@ export async function activate(context: vscode.ExtensionContext) {
       const ok = await authService.authenticate();
       if (ok) {
         provider.updateAuthState(true);
+        await proxyService.checkOrSeedDatabase();
         updateStatusBar();
       }
     }
@@ -485,31 +487,15 @@ function getRepositoryKey(
   return `${repositoryName}:${hash}`;
 }
 
-async function seedDatabase(context: vscode.ExtensionContext) {
-  try {
-    // The copyDatabase function should copy the template to a new database with the user's name
-    const response = await proxyService.checkOrSeedDatabase();
-
-    debugLog(`Check or seed database response: ${JSON.stringify(response)}`);
-    debugLog(`Database provisioned successfully ✅`);
-
-    // save to vscode.workspace that we provisioned the database
-    context.globalState.update(databaseProvisionedKey, true);
-  } catch (error) {
-    console.error("Template application error:", error);
-    throw error;
-  }
-}
-
 async function ensureDatabase(context: vscode.ExtensionContext): Promise<void> {
   try {
-    if (context.globalState.get(databaseProvisionedKey)) {
+    if (authService.getIsDatabaseSeeded()) {
       debugLog(`Database already provisioned`);
       return;
     }
 
     debugLog(`Provisioning database...`);
-    await seedDatabase(context);
+    await proxyService.checkOrSeedDatabase();
 
     debugLog(`Database ready`);
   } catch (error) {

@@ -29,6 +29,7 @@ export class AuthService {
     isAuthenticated: false,
     dbProviderType: "agentdb",
   };
+  private isDatabaseSeeded: boolean = false;
 
   private constructor(context: vscode.ExtensionContext) {
     this.context = context;
@@ -179,6 +180,14 @@ export class AuthService {
 
   public getUser(): GitHubUser | undefined {
     return this.authState.user;
+  }
+
+  public setIsDatabaseSeeded(isSeeded: boolean): void {
+    this.isDatabaseSeeded = isSeeded;
+  }
+
+  public getIsDatabaseSeeded(): boolean {
+    return this.isDatabaseSeeded;
   }
 
   // Compatibility method for the URI handler (not needed for VSCode auth but kept for interface compatibility)
