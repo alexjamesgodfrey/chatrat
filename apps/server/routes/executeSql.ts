@@ -20,7 +20,7 @@ router.post(
       body: { statements },
     } = req as RequestWithProvider;
 
-    console.log("grep statemetns ", statements.length);
+    console.log("grep params", req.body.statements);
     try {
       const results = await dbProvider.executeSql(statements);
       console.log("results", results);

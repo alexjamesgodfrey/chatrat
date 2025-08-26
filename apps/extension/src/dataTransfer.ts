@@ -141,6 +141,19 @@ export async function clearAllRepositoryData(
       sql: "DELETE FROM repositories",
       params: [],
     },
+    {
+      sql: "DELETE FROM open_files",
+      params: [],
+    },
+    {
+      sql: "DELETE FROM repository_files_fts_data",
+      params: [],
+    },
+
+    {
+      sql: "DELETE FROM repository_files_fts_idx",
+      params: [],
+    },
   ]);
 }
 
@@ -208,4 +221,18 @@ export async function deleteOpenFileBecauseItClosed(
   );
 
   console.log("result from deleting:" + JSON.stringify(result));
+}
+
+export async function listRepositories(
+  proxyService: ProxyService
+): Promise<string[]> {
+  const response = await proxyService.executeQuery([
+    {
+      sql: "SELECT DISTINCT name FROM repositories",
+    },
+  ]);
+
+  const repositories = response.results?.[0]?.rows?.map((row: any) => row.name);
+
+  return repositories ?? [];
 }

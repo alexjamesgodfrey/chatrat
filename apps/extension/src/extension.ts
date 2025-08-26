@@ -16,8 +16,6 @@ let proxyService: ProxyService;
 let activeDbName: string | undefined;
 let activeTemplateName: string | undefined;
 
-const hasSeenWelcomeMessageKey = "hasSeenWelcomeMessage";
-
 export async function activate(context: vscode.ExtensionContext) {
   const provider = new ChatratViewProvider(context.extensionUri, context);
   context.subscriptions.push(
@@ -37,7 +35,18 @@ export async function activate(context: vscode.ExtensionContext) {
   await authService.initialize();
 
   if (authService.isAuthenticated()) {
+    provider.updateAuthState(true);
     await proxyService.checkOrSeedDatabase();
+    const indexedRepositories = await dataTransfer.listRepositories(
+      proxyService
+    );
+    authService.setIndexedRepositories(indexedRepositories);
+    provider.updateIndexedRepositories(indexedRepositories);
+
+    const currentRepository = authService.getCurrentRepository();
+    if (currentRepository && indexedRepositories.includes(currentRepository)) {
+      provider.updateHasIndexedCurrentRepository(true);
+    }
   }
 
   // Set up file save event handler
@@ -287,8 +296,8 @@ export async function activate(context: vscode.ExtensionContext) {
       if (await ensureAuthenticated()) {
         provider.updateAuthState(true);
         updateStatusBar();
-        await clearDatabase(context);
-        provider.updateIndexState(false);
+        await clearDatabase(context, authService, provider);
+        provider.updateHasIndexedCurrentRepository(false);
         updateStatusBar();
       }
     }
@@ -322,7 +331,8 @@ export async function activate(context: vscode.ExtensionContext) {
     async () => {
       await authService.logout();
       provider.updateAuthState(false);
-      provider.updateIndexState(false);
+      provider.updateHasIndexedCurrentRepository(false);
+      provider.updateIndexedRepositories([]);
       updateStatusBar();
     }
   );
@@ -620,7 +630,12 @@ async function captureAndSendRepository(
           provider,
           /*silent*/ true
         );
-        provider.updateIndexState(true);
+        provider.updateHasIndexedCurrentRepository(true);
+        const previousRepositories = authService.getIndexedRepositories();
+        provider.updateIndexedRepositories([
+          ...previousRepositories,
+          repositoryName,
+        ]);
         progress.report({ message: "Complete!", increment: 100 });
 
         vscode.window
@@ -830,7 +845,11 @@ async function listStoredRepositories(context: vscode.ExtensionContext) {
   }
 }
 
-async function clearDatabase(context: vscode.ExtensionContext) {
+async function clearDatabase(
+  context: vscode.ExtensionContext,
+  authService: AuthService,
+  provider: ChatratViewProvider
+) {
   const confirm = await vscode.window.showWarningMessage(
     "Are you sure you want to clear all repository data from Chatrat?",
     { modal: true },
@@ -843,6 +862,10 @@ async function clearDatabase(context: vscode.ExtensionContext) {
     await ensureDatabase(context);
 
     await dataTransfer.clearAllRepositoryData(proxyService);
+
+    authService.setIndexedRepositories([]);
+    provider.updateIndexedRepositories([]);
+    provider.updateHasIndexedCurrentRepository(false);
 
     vscode.window.showInformationMessage(
       "Successfully cleared all repository data from Chatrat."

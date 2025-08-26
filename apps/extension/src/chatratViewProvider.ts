@@ -5,24 +5,14 @@ export class ChatratViewProvider implements vscode.WebviewViewProvider {
 
   private _view?: vscode.WebviewView;
   private isAuthenticated: boolean = false;
-  private hasIndexedRepo: boolean = false;
+  private hasIndexedCurrentRepository: boolean = false;
   private mcpUrl: string = "";
+  private indexedRepositories: string[] = [];
 
   constructor(
     private readonly _extensionUri: vscode.Uri,
     private readonly context: vscode.ExtensionContext
-  ) {
-    // Check initial states
-    this.isAuthenticated = context.globalState.get(
-      "chatrat.isAuthenticated",
-      false
-    );
-    this.hasIndexedRepo = context.globalState.get(
-      "chatrat.hasIndexedRepo",
-      false
-    );
-    this.mcpUrl = context.globalState.get("chatrat.mcpUrl", "");
-  }
+  ) {}
 
   public refresh() {
     if (this._view) {
@@ -32,19 +22,21 @@ export class ChatratViewProvider implements vscode.WebviewViewProvider {
 
   public updateAuthState(isAuthenticated: boolean) {
     this.isAuthenticated = isAuthenticated;
-    this.context.globalState.update("chatrat.isAuthenticated", isAuthenticated);
     this.refresh();
   }
 
-  public updateIndexState(hasIndexed: boolean) {
-    this.hasIndexedRepo = hasIndexed;
-    this.context.globalState.update("chatrat.hasIndexedRepo", hasIndexed);
+  public updateHasIndexedCurrentRepository(hasIndexed: boolean) {
+    this.hasIndexedCurrentRepository = hasIndexed;
     this.refresh();
   }
 
   public updateMcpUrl(url: string) {
     this.mcpUrl = url;
-    this.context.globalState.update("chatrat.mcpUrl", url);
+    this.refresh();
+  }
+
+  public updateIndexedRepositories(repositories: string[]) {
+    this.indexedRepositories = repositories;
     this.refresh();
   }
 
@@ -84,7 +76,8 @@ export class ChatratViewProvider implements vscode.WebviewViewProvider {
 
   private _getHtmlForWebview(webview: vscode.Webview) {
     // Show different UI based on state
-    const showGettingStarted = !this.isAuthenticated || !this.hasIndexedRepo;
+    const showGettingStarted =
+      !this.isAuthenticated || !this.hasIndexedCurrentRepository;
 
     return `<!DOCTYPE html>
         <html lang="en">
@@ -118,7 +111,7 @@ export class ChatratViewProvider implements vscode.WebviewViewProvider {
                     color: var(--vscode-textLink-foreground);
                 }
                 .getting-started {
-                    background: linear-gradient(135deg, var(--vscode-textLink-foreground) 0%, var(--vscode-textLink-activeForeground) 100%);
+                    background: linear-gradient(135deg, var(--vscode-button-background) 0%, var(--vscode-focusBorder) 100%);
                     color: var(--vscode-editor-background);
                     padding: 20px;
                     border-radius: 8px;
@@ -153,8 +146,8 @@ export class ChatratViewProvider implements vscode.WebviewViewProvider {
                 }
                 .step.completed {
                     opacity: 1;
-                    background: #4ec9b0;
-                    color: var(--vscode-editor-background);
+                    background: var(--vscode-testing-iconPassed, var(--vscode-button-background));
+                    color: var(--vscode-button-foreground);
                 }
                 .step.completed::after {
                     content: '✓';
@@ -231,7 +224,7 @@ export class ChatratViewProvider implements vscode.WebviewViewProvider {
                 }
                 .success-box {
                     background-color: var(--vscode-textBlockQuote-background);
-                    border-left: 3px solid #4ec9b0;
+                    border-left: 3px solid var(--vscode-testing-iconPassed, var(--vscode-button-background));
                     padding: 12px;
                     margin: 12px 0;
                 }
@@ -303,17 +296,7 @@ export class ChatratViewProvider implements vscode.WebviewViewProvider {
         </head>
         <body>
             <h1>
-                <span class="emoji">💬🐀</span> Chatrat
-                ${
-                  this.isAuthenticated
-                    ? '<span class="status-badge authenticated">Authenticated</span>'
-                    : ""
-                }
-                ${
-                  this.hasIndexedRepo
-                    ? '<span class="status-badge indexed">Indexed</span>'
-                    : ""
-                }
+                <span class="emoji" style="white-space: nowrap;"><span style="letter-spacing: 0.2em;">💬</span>🐀</span> Chatrat
             </h1>
             
             ${
@@ -328,7 +311,7 @@ export class ChatratViewProvider implements vscode.WebviewViewProvider {
                         <span>1</span>
                     </div>
                     <div class="step ${
-                      this.hasIndexedRepo
+                      this.hasIndexedCurrentRepository
                         ? "completed"
                         : this.isAuthenticated
                         ? "active"
@@ -336,7 +319,9 @@ export class ChatratViewProvider implements vscode.WebviewViewProvider {
                     }">
                         <span>2</span>
                     </div>
-                    <div class="step ${this.hasIndexedRepo ? "active" : ""}">
+                    <div class="step ${
+                      this.hasIndexedCurrentRepository ? "active" : ""
+                    }">
                         <span>3</span>
                     </div>
                 </div>
@@ -345,17 +330,17 @@ export class ChatratViewProvider implements vscode.WebviewViewProvider {
                       !this.isAuthenticated
                         ? `
                         <p><strong>Step 1: Authenticate with GitHub</strong></p>
-                        <p style="font-size: 0.9em; opacity: 0.9; margin: 8px 0;">Sign in to secure your repository data</p>
+                        <p style="font-size: 0.9em; opacity: 0.9; margin: 8px 0;">Sign in to secure your workspace data</p>
                         <button class="primary-button" onclick="runCommand('chatrat.authenticate')">
                             🔐 Sign in with GitHub
                         </button>
                     `
-                        : !this.hasIndexedRepo
+                        : !this.hasIndexedCurrentRepository
                         ? `
-                        <p><strong>Step 2: Index Your Repository</strong></p>
-                        <p style="font-size: 0.9em; opacity: 0.9; margin: 8px 0;">Scan and store your workspace in private AgentDB</p>
+                        <p><strong>Step 2: Index This Workspace</strong></p>
+                        <p style="font-size: 0.9em; opacity: 0.9; margin: 8px 0;">Securely scan and store your workspace for use with MCP</p>
                         <button class="primary-button" onclick="runCommand('chatrat.captureAndSend')">
-                            📦 Index Current Repository
+                            📦 Index Current Workspace
                         </button>
                     `
                         : `
@@ -375,7 +360,7 @@ export class ChatratViewProvider implements vscode.WebviewViewProvider {
             `
                 : `
             <div class="success-box">
-                    <strong>✅ Ready!</strong> Your repository is indexed and ready for use with Claude/MCP.
+                    <strong>✅ Ready!</strong> Your workspace is indexed and ready for use with Claude/MCP.
                 <div class="mcp-box" style="margin-top: 10px;">
                     <code class="mcp-link" id="mcpUrlText">${
                       this.mcpUrl || "— will appear here after indexing —"
@@ -386,26 +371,32 @@ export class ChatratViewProvider implements vscode.WebviewViewProvider {
             `
             }
 
+            ${
+              this.isAuthenticated && this.indexedRepositories.length > 0
+                ? `
+            <div class="section">
+                <h2>📚 Indexed Repositories</h2>
+                <div class="info-box">
+                    <p><strong>${this.indexedRepositories.length} workspace${
+                    this.indexedRepositories.length === 1 ? "" : "ies"
+                  } indexed:</strong></p>
+                    <ul style="margin: 8px 0; padding-left: 20px;">
+                        ${this.indexedRepositories
+                          .map((repo) => `<li><code>${repo}</code></li>`)
+                          .join("")}
+                    </ul>
+                    <p style="margin-top: 8px; font-size: 0.9em; opacity: 0.8;">
+                        These repositories are available for MCP access. 
+                    </p>
+                </div>
+            </div>
+            `
+                : ""
+            }
+
             <div class="section">
                 <h2>🚀 Commands</h2>
                 <ul class="command-list">
-                    <li class="command-item ${
-                      !this.isAuthenticated ? "disabled" : ""
-                    }">
-                        <div class="command-title">📎 MCP URL</div>
-                        <div class="command-desc">
-                          <span id="mcpUrlInline">${
-                            this.isAuthenticated
-                              ? this.mcpUrl || "Index a repo to generate URL"
-                              : "Sign in first to view URL"
-                          }</span>
-                          ${
-                            this.isAuthenticated && this.mcpUrl
-                              ? `<button class="primary-button" style="margin-left:8px" onclick="copyMcpUrl()">Copy</button>`
-                              : ""
-                          }
-                        </div>
-                    </li>  
                     <li class="command-item ${
                       !this.isAuthenticated ? "disabled" : ""
                     }" 
@@ -414,12 +405,12 @@ export class ChatratViewProvider implements vscode.WebviewViewProvider {
                             ? "runCommand('chatrat.captureAndSend')"
                             : ""
                         }">
-                        <div class="command-title">📦 Index Repository</div>
+                        <div class="command-title">📦 Index workspace</div>
                         <div class="command-desc">
                             ${
                               !this.isAuthenticated
-                                ? "Sign in first to index repository"
-                                : "Capture and index the current workspace in AgentDB"
+                                ? "Sign in first to index workspace"
+                                : "Index the current workspace"
                             }
                         </div>
                     </li>
@@ -436,10 +427,14 @@ export class ChatratViewProvider implements vscode.WebviewViewProvider {
                             ${
                               !this.isAuthenticated
                                 ? "Sign in first to view repositories"
-                                : "View all repositories stored in your database"
+                                : "View all indexed repositories"
                             }
                         </div>
                     </li>
+                    ${
+                      this.isAuthenticated
+                        ? ""
+                        : `
                     <li class="command-item" onclick="runCommand('chatrat.authenticate')">
                         <div class="command-title">🔐 ${
                           this.isAuthenticated
@@ -454,12 +449,14 @@ export class ChatratViewProvider implements vscode.WebviewViewProvider {
                             }
                         </div>
                     </li>
+                    `
+                    }
                     ${
                       this.isAuthenticated
                         ? `
                     <li class="command-item" onclick="runCommand('chatrat.clearDatabase')">
                         <div class="command-title">🗑️ Clear Database</div>
-                        <div class="command-desc">Remove all indexed repository data</div>
+                        <div class="command-desc">Delete all indexed workspace data</div>
                     </li>
                     <li class="command-item" onclick="runCommand('chatrat.logout')">
                         <div class="command-title">🚪 Logout</div>
@@ -476,9 +473,9 @@ export class ChatratViewProvider implements vscode.WebviewViewProvider {
                 <ol class="steps">
                     <li><strong>Authenticate:</strong> Sign in with GitHub to secure your data</li>
                     <li><strong>Index Your Code:</strong> Chatrat indexes your codebase for use with MCP</li>
-                    <li><strong>Get MCP URL:</strong> Generate a unique URL that connects Claude or another MCP client to your indexed code</li>
+                    <li><strong>Get MCP URL:</strong> A unique URL is automaticalyl generated that connects Claude or another MCP client to your indexed code</li>
                     <li><strong>Configure Claude:</strong> Add the MCP URL to Claude Desktop's configuration</li>
-                    <li><strong>Chat with Context:</strong>Once you tell Claude what repository you're working in, it will be able to (1) reference file contents and (2) know what files you have open and the errors in them</li>
+                    <li><strong>Chat with Context:</strong>Once you tell Claude what workspace you're working in, it will be able to (1) reference file contents and (2) know what files you have open and the errors in them!</li>
                 </ol>
             </div>
 
@@ -494,13 +491,14 @@ export class ChatratViewProvider implements vscode.WebviewViewProvider {
                 </div>
             </div>
 
+ 
             <div class="section">
-                <h2>🔧 Claude Desktop Setup</h2>
-                <div class="info-box">
-                    <p>After getting your MCP URL, add it to Claude Desktop's config:</p>
-                    <p style="margin-top: 8px;"><code>~/Library/Application Support/Claude/claude_desktop_config.json</code></p>
-                    <p style="margin-top: 8px;">The URL will look like: <code>https://mcp.sh/s/XXXXXX</code></p>
-                </div>
+                <h2>😸 Say hello</h2>
+                <p>If you have any questions or feedback, please contact us at <a href="mailto:grep@chatrat.cat">grep@chatrat.cat</a></p>
+                <p>Join the community: <a href="https://discord.gg/chatrat">Discord</a></p>
+                <p>Want to contribute? Visit us on <a href="https://github.com/alexjamesgodfrey/chatrat">GitHub</a></p>
+                <p>www: <a href="https://chatrat.cat">chatrat.cat</a></p>
+                <p>By proceeding, you agree to the <a href="https://chatrat.cat/terms">Terms of Service</a> and <a href="https://chatrat.cat/privacy">Privacy Policy</a></p>
             </div>
 
             <script>

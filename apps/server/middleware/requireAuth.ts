@@ -6,12 +6,6 @@ import type { AuthenticatedRequest } from "../types";
 function isAuthenticated(req: express.Request): req is AuthenticatedRequest {
   const aReq = req as AuthenticatedRequest;
   const result = !!(aReq.session?.githubToken && aReq.session?.githubUser);
-  console.log("🔍 isAuthenticated check:", {
-    hasSession: !!aReq.session,
-    hasGithubToken: !!aReq.session?.githubToken,
-    hasGithubUser: !!aReq.session?.githubUser,
-    result,
-  });
   return result;
 }
 
@@ -20,26 +14,11 @@ export const requireAuth: express.RequestHandler = async (
   res: express.Response,
   next
 ) => {
-  console.log("🚪 requireAuth middleware started");
-  console.log("📋 Initial request details:", {
-    method: req.method,
-    url: req.url,
-    hasSession: !!req.session,
-    sessionId: req.session?.id || "none",
-    hasAuthHeader: !!req.headers.authorization,
-  });
-
   // FIRST: Check for Bearer token in Authorization header and process it
   const authHeader = req.headers.authorization;
-  console.log(
-    "📨 Authorization header:",
-    authHeader ? `${authHeader.substring(0, 20)}...` : "none"
-  );
 
   if (authHeader?.startsWith("Bearer ")) {
     const token = authHeader.substring(7);
-    console.log("🎫 Found Bearer token, length:", token.length);
-    console.log("🌐 Making GitHub API call to validate token...");
 
     try {
       const userResponse = await axios.get("https://api.github.com/user", {
@@ -47,14 +26,6 @@ export const requireAuth: express.RequestHandler = async (
           Authorization: `Bearer ${token}`,
           Accept: "application/vnd.github.v3+json",
         },
-      });
-
-      console.log("✅ GitHub API call successful");
-      console.log("👤 GitHub user data:", {
-        login: userResponse.data.login,
-        id: userResponse.data.id,
-        name: userResponse.data.name,
-        email: userResponse.data.email,
       });
 
       // Populate session with GitHub data
@@ -72,7 +43,6 @@ export const requireAuth: express.RequestHandler = async (
             console.error("❌ Failed to save session:", err);
             reject(err);
           } else {
-            console.log("💾 Session saved successfully");
             resolve();
           }
         });
@@ -104,6 +74,5 @@ export const requireAuth: express.RequestHandler = async (
     return res.status(401).json({ error: "Authentication required" });
   }
 
-  console.log("🎉 Authentication successful - proceeding to next middleware");
   return next();
 };

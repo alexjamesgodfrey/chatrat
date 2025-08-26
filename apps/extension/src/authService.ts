@@ -5,6 +5,7 @@
 
 import * as vscode from "vscode";
 import axios from "axios";
+import path from "path";
 
 export interface GitHubUser {
   id: number;
@@ -30,6 +31,8 @@ export class AuthService {
     dbProviderType: "agentdb",
   };
   private isDatabaseSeeded: boolean = false;
+  private indexedRepositories: string[] = [];
+  private currentRepository: string | undefined = undefined;
 
   private constructor(context: vscode.ExtensionContext) {
     this.context = context;
@@ -45,6 +48,11 @@ export class AuthService {
 
   public async initialize(): Promise<void> {
     try {
+      const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+      if (workspaceFolder) {
+        this.currentRepository = path.basename(workspaceFolder.uri.fsPath);
+      }
+
       this.authSession = await vscode.authentication.getSession(
         "github",
         ["user:email"],
@@ -188,6 +196,18 @@ export class AuthService {
 
   public getIsDatabaseSeeded(): boolean {
     return this.isDatabaseSeeded;
+  }
+
+  public setIndexedRepositories(repositories: string[]): void {
+    this.indexedRepositories = repositories;
+  }
+
+  public getIndexedRepositories(): string[] {
+    return this.indexedRepositories;
+  }
+
+  public getCurrentRepository(): string | undefined {
+    return this.currentRepository;
   }
 
   // Compatibility method for the URI handler (not needed for VSCode auth but kept for interface compatibility)

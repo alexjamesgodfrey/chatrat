@@ -191,11 +191,13 @@ export class ProxyService {
       }
 
       // Return null for queued operations
-      return {results: []};
+      return { results: [] };
     }
   }
 
-  private async executeStatementsNow(statements: SqlStatement[]): Promise<ExecuteResult> {
+  private async executeStatementsNow(
+    statements: SqlStatement[]
+  ): Promise<ExecuteResult> {
     try {
       const body: ExecuteSqlSchema = {
         statements,
@@ -302,5 +304,3 @@ export class ProxyService {
     this.sqlQueue.destroy();
   }
 }
-
-
