@@ -8,15 +8,7 @@ import { ChatratViewProvider } from "./chatratViewProvider";
 import * as dataTransfer from "./dataTransfer";
 import { FileData } from "./dataTransfer";
 import { McpSlugResult, ProxyService } from "./proxyService";
-
-const OUTPUT_CHANNEL_NAME = "Chatrat";
-const theOneAndOnlyOutputChannel =
-  vscode.window.createOutputChannel(OUTPUT_CHANNEL_NAME);
-theOneAndOnlyOutputChannel.show(true);
-
-function debugLog(...args: any[]) {
-  theOneAndOnlyOutputChannel.appendLine(args.join(" "));
-}
+import { debugLog, OUTPUT_CHANNEL_NAME } from "./util";
 
 // Global services
 let authService: AuthService;

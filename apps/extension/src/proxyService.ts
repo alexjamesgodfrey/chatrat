@@ -2,6 +2,7 @@ import { ExecuteSqlSchema, SqlStatement } from "@chatrat/types";
 import axios, { AxiosInstance } from "axios";
 import * as vscode from "vscode";
 import { AuthService } from "./authService";
+import { debugLog } from "./util";
 
 export interface DatabaseInfo {
   name: string;
@@ -23,6 +24,79 @@ export interface NaturalLanguageResult {
   }>;
 }
 
+class WriteQueue<T> {
+  private queue: T[];
+  private capacity: number;
+  private flushInterval: NodeJS.Timeout | null = null;
+  private flushTimeoutMs: number;
+
+  constructor(capacity: number, flushTimeoutMs: number = 3000) {
+    this.queue = [];
+    this.capacity = capacity;
+    this.flushTimeoutMs = flushTimeoutMs;
+  }
+
+  public isAtCapacity(): boolean {
+    return this.queue.length >= this.capacity;
+  }
+
+  public enqueue(item: T): void {
+    this.queue.push(item);
+    this.scheduleFlush();
+  }
+
+  public enqueueBatch(items: T[]): void {
+    this.queue.push(...items);
+    this.scheduleFlush();
+  }
+
+  public flushQueue(): T[] {
+    const queueCopy = this.queue.slice();
+    this.queue = [];
+    this.clearFlushTimer();
+    return queueCopy;
+  }
+
+  public getQueueLength(): number {
+    return this.queue.length;
+  }
+
+  public isEmpty(): boolean {
+    return this.queue.length === 0;
+  }
+
+  private scheduleFlush(): void {
+    if (this.flushInterval) {
+      clearTimeout(this.flushInterval);
+    }
+
+    this.flushInterval = setTimeout(() => {
+      if (!this.isEmpty()) {
+        // Trigger flush callback if provided
+        this.onFlushTimeout?.();
+      }
+    }, this.flushTimeoutMs);
+  }
+
+  private clearFlushTimer(): void {
+    if (this.flushInterval) {
+      clearTimeout(this.flushInterval);
+      this.flushInterval = null;
+    }
+  }
+
+  public setFlushCallback(callback: () => void): void {
+    this.onFlushTimeout = callback;
+  }
+
+  private onFlushTimeout?: () => void;
+
+  public destroy(): void {
+    this.clearFlushTimer();
+    this.queue = [];
+  }
+}
+
 export interface McpSlugResult {
   slug: string;
   shortUrl: string;
@@ -33,10 +107,18 @@ export class ProxyService {
   private authService: AuthService;
   private serverBaseUrl: string;
   private httpClient: AxiosInstance;
+  private sqlQueue: WriteQueue<SqlStatement>;
+  private isFlushingQueue: boolean = false;
 
   private constructor(authService: AuthService) {
     this.authService = authService;
     this.serverBaseUrl = this.getServerBaseUrl();
+    this.sqlQueue = new WriteQueue<SqlStatement>(50, 3000); // 20 capacity, 3s timeout
+
+    // Set up auto-flush callback
+    this.sqlQueue.setFlushCallback(() => {
+      this.flushQueuedStatements().catch(console.error);
+    });
 
     this.httpClient = axios.create({
       baseURL: this.serverBaseUrl,
@@ -88,8 +170,32 @@ export class ProxyService {
   }
 
   public async executeQuery(
-    statements: SqlStatement[]
+    statements: SqlStatement[],
+    executeNow: boolean = true
   ): Promise<ExecuteResult> {
+    debugLog("Queue size: " + this.sqlQueue.getQueueLength());
+
+    if (executeNow) {
+      // First flush any queued operations to preserve ordering
+      await this.flushQueuedStatements();
+
+      // Then execute immediately
+      return this.executeStatementsNow(statements);
+    } else {
+      // Add to queue for batched execution
+      this.sqlQueue.enqueueBatch(statements);
+
+      // Check if we should flush immediately due to capacity
+      if (this.sqlQueue.isAtCapacity()) {
+        await this.flushQueuedStatements();
+      }
+
+      // Return null for queued operations
+      return {results: []};
+    }
+  }
+
+  private async executeStatementsNow(statements: SqlStatement[]): Promise<ExecuteResult> {
     try {
       const body: ExecuteSqlSchema = {
         statements,
@@ -103,6 +209,36 @@ export class ProxyService {
         `Failed to execute query: ${JSON.stringify(error, null, 2)}`
       );
     }
+  }
+
+  private async flushQueuedStatements(): Promise<void> {
+    if (this.isFlushingQueue || this.sqlQueue.isEmpty()) {
+      return;
+    }
+
+    this.isFlushingQueue = true;
+
+    try {
+      const statements = this.sqlQueue.flushQueue();
+      if (statements.length > 0) {
+        debugLog(`Auto-flushing ${statements.length} queued SQL statements`);
+        await this.executeStatementsNow(statements);
+      }
+    } catch (error) {
+      console.error("Error flushing queued statements:", error);
+      // Re-throw to let caller handle the error
+      throw error;
+    } finally {
+      this.isFlushingQueue = false;
+    }
+  }
+
+  public async flushQueue(): Promise<void> {
+    await this.flushQueuedStatements();
+  }
+
+  public getQueueLength(): number {
+    return this.sqlQueue.getQueueLength();
   }
 
   public async checkOrSeedDatabase(): Promise<void> {
@@ -153,4 +289,18 @@ export class ProxyService {
       return false;
     }
   }
+
+  public async dispose(): Promise<void> {
+    // Flush any remaining queued statements before disposing
+    try {
+      await this.flushQueuedStatements();
+    } catch (error) {
+      console.error("Error flushing queue during disposal:", error);
+    }
+
+    // Clean up the queue
+    this.sqlQueue.destroy();
+  }
 }
+
+

@@ -24,17 +24,20 @@ export async function upsertRepositoryFile(
   content: string,
   size: number
 ): Promise<void> {
-  await proxyService.executeQuery([
-    {
-      sql: `INSERT INTO repository_files (repository_id, file_path, content, size, created_at)
+  await proxyService.executeQuery(
+    [
+      {
+        sql: `INSERT INTO repository_files (repository_id, file_path, content, size, created_at)
             VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
             ON CONFLICT(repository_id, file_path) DO UPDATE SET
             content = excluded.content,
             size = excluded.size,
             created_at = CURRENT_TIMESTAMP`,
-      params: [repoId, filePath, content, size],
-    },
-  ]);
+        params: [repoId, filePath, content, size],
+      },
+    ],
+    false
+  );
 }
 
 /**
@@ -44,9 +47,11 @@ export async function upsertRepository(
   proxyService: ProxyService,
   repositoryData: RepositoryData
 ): Promise<any> {
-  const result = await proxyService.executeQuery([
-    {
-      sql: `INSERT INTO repositories (id, name, workspace_path, total_files, total_size, last_updated)
+  const runInBackground = false;
+  const result = await proxyService.executeQuery(
+    [
+      {
+        sql: `INSERT INTO repositories (id, name, workspace_path, total_files, total_size, last_updated)
             VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
             ON CONFLICT(id) DO UPDATE SET
             name = excluded.name,
@@ -54,15 +59,17 @@ export async function upsertRepository(
             total_files = excluded.total_files,
             total_size = excluded.total_size,
             last_updated = CURRENT_TIMESTAMP`,
-      params: [
-        repositoryData.id,
-        repositoryData.name,
-        repositoryData.workspacePath,
-        repositoryData.totalFiles,
-        repositoryData.totalSize,
-      ],
-    },
-  ]);
+        params: [
+          repositoryData.id,
+          repositoryData.name,
+          repositoryData.workspacePath,
+          repositoryData.totalFiles,
+          repositoryData.totalSize,
+        ],
+      },
+    ],
+    !runInBackground
+  );
   return result;
 }
 
@@ -73,12 +80,15 @@ export async function deleteRepositoryFiles(
   proxyService: ProxyService,
   repoId: string
 ): Promise<void> {
-  await proxyService.executeQuery([
-    {
-      sql: "DELETE FROM repository_files WHERE repository_id = ?",
-      params: [repoId],
-    },
-  ]);
+  await proxyService.executeQuery(
+    [
+      {
+        sql: "DELETE FROM repository_files WHERE repository_id = ?",
+        params: [repoId],
+      },
+    ],
+    false
+  );
 }
 
 /**
@@ -94,7 +104,8 @@ export async function insertRepositoryFilesBatch(
       sql: `INSERT INTO repository_files (repository_id, file_path, content, size, created_at)
             VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`,
       params: [repoId, file.path, file.content, file.size],
-    }))
+    })),
+    false
   );
 }
 
@@ -126,8 +137,6 @@ export async function clearAllRepositoryData(
       sql: "DELETE FROM repository_files",
       params: [],
     },
-  ]);
-  await proxyService.executeQuery([
     {
       sql: "DELETE FROM repositories",
       params: [],
@@ -140,26 +149,32 @@ export async function upsertFocusedFile(
   repoId: string,
   filePath: string
 ): Promise<void> {
-  await proxyService.executeQuery([
-    {
-      sql: `INSERT INTO open_files (repository_id, file_path, is_focused, opened_at)
+  await proxyService.executeQuery(
+    [
+      {
+        sql: `INSERT INTO open_files (repository_id, file_path, is_focused, opened_at)
                 VALUES (?, ?, 1, CURRENT_TIMESTAMP)
                 ON CONFLICT(repository_id, file_path) DO UPDATE SET
                 is_focused = 1,
                 opened_at = CURRENT_TIMESTAMP`,
-      params: [repoId, filePath],
-    },
-  ]);
+        params: [repoId, filePath],
+      },
+    ],
+    false
+  );
 }
 
 export async function upsertFileDiagnostics(
-    proxyService: ProxyService,
-    repoId: string,
-    filePath: string,
-    errorsJson: string
-  ): Promise<void> {
-    console.log(`I want to upsert the following diagnostics for ${repoId} and ${filePath}: ${errorsJson}`);
-    await proxyService.executeQuery([
+  proxyService: ProxyService,
+  repoId: string,
+  filePath: string,
+  errorsJson: string
+): Promise<void> {
+  console.log(
+    `I want to upsert the following diagnostics for ${repoId} and ${filePath}: ${errorsJson}`
+  );
+  await proxyService.executeQuery(
+    [
       {
         sql: `
         INSERT INTO open_files (repository_id, file_path, diagnostics)
@@ -169,15 +184,18 @@ export async function upsertFileDiagnostics(
         `,
         params: [repoId, filePath, errorsJson],
       },
-    ]);
-  }
+    ],
+    false
+  );
+}
 
-  export async function deleteOpenFileBecauseItClosed(
-    proxyService: ProxyService,
-    repoId: string,
-    filePath: string
-  ): Promise<void> {
-    const result = await proxyService.executeQuery([
+export async function deleteOpenFileBecauseItClosed(
+  proxyService: ProxyService,
+  repoId: string,
+  filePath: string
+): Promise<void> {
+  const result = await proxyService.executeQuery(
+    [
       {
         sql: `
         DELETE FROM open_files
@@ -185,7 +203,9 @@ export async function upsertFileDiagnostics(
         `,
         params: [repoId, filePath],
       },
-    ]);
+    ],
+    false
+  );
 
-    console.log("result from deleting:" + JSON.stringify(result));
-  }
+  console.log("result from deleting:" + JSON.stringify(result));
+}
