@@ -25,7 +25,7 @@ let activeDbName: string | undefined;
 let activeTemplateName: string | undefined;
 
 const hasSeenWelcomeMessageKey = "hasSeenWelcomeMessage";
-const databaseProvisionedKey = "databaseProvisionedReal7";
+const databaseProvisionedKey = "databaseProvisionedReal14";
 
 export async function activate(context: vscode.ExtensionContext) {
   const provider = new ChatratViewProvider(context.extensionUri, context);
@@ -734,8 +734,6 @@ async function reindexRepository(
     // Upsert repository record
     debugLog("\n--- Upserting Repository ---");
     while (true) {
-      await sleep(5000);
-
       const result = await dataTransfer.upsertRepository(proxyService, {
         id: repoId,
         name: repositoryName,

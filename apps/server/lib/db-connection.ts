@@ -74,14 +74,18 @@ class AgentDBDatabase implements DatabaseProvider {
 
   async seedDatabaseIfNecessary(): Promise<void> {
     const templateNames = [CHATRAT_TEMPLATE_NAME];
+    if (!this.client) {
+      throw new Error("AgentDB connection not initialized");
+    }
     try {
-      await this.client?._createDatabaseWithTemplates(
+      await this.client._createDatabaseWithTemplates(
         this.token,
         this.dbName,
         this.dbType,
         templateNames
       );
     } catch (error) {
+      console.error("error", error);
       if (error instanceof ValidationError) {
         return;
       }
