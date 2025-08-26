@@ -6,7 +6,11 @@ settings:
 
 importers:
 
-  .: {}
+  .:
+    dependencies:
+      tsx:
+        specifier: ^4.20.5
+        version: 4.20.5
 
   apps/extension:
     dependencies:
