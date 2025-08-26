@@ -7,7 +7,10 @@ import {
   getFilePathInfo,
   isDocumentInWorkspace,
   getRepositoryInfo,
+  shouldProcessFile
 } from "./pathUtils";
+
+
 
 export interface EventListenerServices {
   authService: AuthService;
@@ -94,6 +97,8 @@ async function handleFileClose(
   authService: AuthService,
   proxyService: ProxyService
 ): Promise<void> {
+  if (!shouldProcessFile(document.uri.fsPath).shouldProcess) return;
+
   if (!authService.getIsDatabaseSeeded() || !isDocumentInWorkspace(document))
     return;
 
@@ -118,6 +123,7 @@ async function handleEditorFocus(
   authService: AuthService,
   proxyService: ProxyService
 ): Promise<void> {
+  if (editor?.document.uri.fsPath && !shouldProcessFile(editor?.document.uri.fsPath).shouldProcess) return;
   if (!editor || !authService.getIsDatabaseSeeded()) return;
   if (!isDocumentInWorkspace(editor.document)) return;
 
@@ -126,6 +132,14 @@ async function handleEditorFocus(
 
   if (!repoInfo || !pathInfo || !pathInfo.isInWorkspace) return;
 
+  // create in case it somehow didn't exist
+  await dataTransfer.upsertRepositoryFile(
+    proxyService,
+    repoInfo.id,
+    pathInfo.repoRelativePath,
+    editor.document.getText(),
+    editor.document.getText().length
+  );
   await dataTransfer.upsertFocusedFile(
     proxyService,
     repoInfo.id,
@@ -138,12 +152,15 @@ function handleDiagnosticsChange(
   authService: AuthService,
   proxyService: ProxyService
 ): void {
+
   if (!authService.getIsDatabaseSeeded() || event.uris.length === 0) return;
 
   const repoInfo = getRepositoryInfo();
   if (!repoInfo) return;
 
   event.uris.forEach((uri) => {
+    if (!shouldProcessFile(uri.fsPath).shouldProcess) return;
+
     const pathInfo = getFilePathInfo(uri.fsPath);
     if (!pathInfo || !pathInfo.isInWorkspace) return;
 
@@ -173,6 +190,8 @@ function handleFileDeletion(
   if (!repoInfo) return;
 
   event.files.forEach(async (uri) => {
+    if (!shouldProcessFile(uri.fsPath).shouldProcess) return;
+
     const pathInfo = getFilePathInfo(uri.fsPath);
     if (!pathInfo || !pathInfo.isInWorkspace) return;
 
@@ -189,6 +208,8 @@ function handleFileRename(
   authService: AuthService,
   proxyService: ProxyService
 ) {
+  if (!shouldProcessFile(event.files[0].newUri.fsPath).shouldProcess) return;
+  if (!shouldProcessFile(event.files[0].oldUri.fsPath).shouldProcess) return;
   if (!authService.getIsDatabaseSeeded()) return;
   if (!event.files.length) return;
   if (!event.files[0].oldUri.fsPath) return;
@@ -229,6 +250,7 @@ function handleFileCreation(
   authService: AuthService,
   proxyService: ProxyService
 ) {
+  if (!shouldProcessFile(event.files[0].fsPath).shouldProcess) return;
   if (!authService.getIsDatabaseSeeded()) return;
   if (!event.files.length) return;
   if (!event.files[0].fsPath) return;

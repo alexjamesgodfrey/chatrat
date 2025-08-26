@@ -11,8 +11,6 @@ import {
 } from "./pathUtils";
 
 export interface ScanOptions {
-  excludePatterns?: string[];
-  maxFileSize?: number;
   progress?: vscode.Progress<{ message?: string; increment?: number }>;
   token?: vscode.CancellationToken;
 }
@@ -23,6 +21,12 @@ export interface ScanResult {
   totalSize: number;
 }
 
+const config = vscode.workspace.getConfiguration("chatrat");
+const excludePatterns = config.get<string[]>("excludePatterns") || [];
+
+export const maxFileSize = config.get<number>("maxFileSize") || 1048576;
+export const fileFilter = createFileFilter(excludePatterns);
+
 /**
  * Scan a directory recursively and collect all processable files
  */
@@ -31,8 +35,6 @@ export async function scanDirectory(
   options: ScanOptions = {}
 ): Promise<ScanResult> {
   const {
-    excludePatterns = [],
-    maxFileSize = 1048576, // 1MB default
     progress,
     token
   } = options;
@@ -43,7 +45,6 @@ export async function scanDirectory(
 
   const files: FileData[] = [];
   const errors: string[] = [];
-  const fileFilter = createFileFilter(excludePatterns);
 
   await walkDirectory(
     dirPath,
@@ -118,7 +119,6 @@ async function walkDirectory(
         repositoryName,
         files,
         errors,
-        maxFileSize,
         progress
       );
   }
@@ -133,11 +133,10 @@ async function processFile(
   repositoryName: string,
   files: FileData[],
   errors: string[],
-  maxFileSize: number,
   progress?: vscode.Progress<{ message?: string; increment?: number }>
 ): Promise<void> {
   try {
-    const processResult = shouldProcessFile(fullPath, maxFileSize);
+    const processResult = shouldProcessFile(fullPath);
     
     if (!processResult.shouldProcess) {
       if (processResult.reason) 

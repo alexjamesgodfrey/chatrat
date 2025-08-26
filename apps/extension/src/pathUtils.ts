@@ -3,6 +3,7 @@ import * as fs from "fs";
 import ignore from "ignore";
 import * as path from "path";
 import * as vscode from "vscode";
+import { fileFilter, maxFileSize } from "./fileScanner";
 
 export interface RepositoryInfo {
   name: string;
@@ -165,11 +166,7 @@ export function isBinaryFile(filePath: string): boolean {
 /**
  * Check if a file should be processed (not ignored, not binary, within size limits)
  */
-export function shouldProcessFile(
-  filePath: string,
-  maxFileSize: number,
-  fileFilter?: (relativePath: string) => boolean
-): { shouldProcess: boolean; reason?: string } {
+export function shouldProcessFile(filePath: string): { shouldProcess: boolean; reason?: string } {
   const pathInfo = getFilePathInfo(filePath);
   if (!pathInfo || !pathInfo.isInWorkspace)
     return { shouldProcess: false, reason: "File not in workspace" };

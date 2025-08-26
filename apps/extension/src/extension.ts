@@ -395,10 +395,6 @@ async function captureAndSendRepository(
     return;
   }
 
-  const config = vscode.workspace.getConfiguration("chatrat");
-  const excludePatterns = config.get<string[]>("excludePatterns") || [];
-  const maxFileSize = config.get<number>("maxFileSize") || 1048576;
-
   vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
@@ -416,8 +412,6 @@ async function captureAndSendRepository(
         progress.report({ message: "Scanning files...", increment: 10 });
 
         const scanResult = await scanDirectory(workspaceFolder.uri.fsPath, {
-          excludePatterns,
-          maxFileSize,
           progress,
           token
         });
