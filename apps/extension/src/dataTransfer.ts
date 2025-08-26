@@ -234,3 +234,20 @@ export async function listRepositories(
 
   return repositories ?? [];
 }
+
+export async function deleteRepositoryFile(
+  proxyService: ProxyService,
+  repoId: string,
+  filePath: string
+): Promise<void> {
+  debugLog(`Deleting file: ${filePath}`);
+  await proxyService.executeQuery(
+    [
+      {
+        sql: "DELETE FROM repository_files WHERE repository_id = ? AND file_path = ?",
+        params: [repoId, filePath],
+      },
+    ],
+    false
+  );
+}
